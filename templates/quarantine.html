@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Quarantine Queue & Message Repository - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1 class="page-title">Quarantine Queue & Threat Repository</h1>
+      <p class="page-subtitle">Inspect intercepted phishing attacks, review flagged items, and apply analyst dispositions.</p>
+    </div>
+    <div class="header-actions">
+      <a href="{{ url_for('main.scanner_page') }}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Scan Another Email
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card">
+    
+    <!-- Filters & Search Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input 
+          type="text" 
+          id="table-search" 
+          class="search-input" 
+          placeholder="Search sender, subject, or threat indicators..." 
+          onkeyup="filterMessages()"
+        >
+        <button type="button" class="search-clear hidden" id="search-clear-btn" onclick="clearSearch()">&times;</button>
+      </div>
+
+      <div class="filter-pills" id="filter-pills">
+        <button type="button" class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">
+          All <span class="pill-count">{{ messages|length }}</span>
+        </button>
+        <button type="button" class="filter-pill filter-quarantined" data-filter="quarantined" onclick="setFilter('quarantined', this)">
+          Quarantined <span class="pill-count">{{ stats.quarantined }}</span>
+        </button>
+        <button type="button" class="filter-pill filter-review" data-filter="review" onclick="setFilter('review', this)">
+          Needs Review <span class="pill-count">{{ stats.review }}</span>
+        </button>
+        <button type="button" class="filter-pill filter-delivered" data-filter="delivered" onclick="setFilter('delivered', this)">
+          Delivered <span class="pill-count">{{ stats.delivered }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Table -->
+    <div class="table-responsive">
+      <table class="data-table" id="messages-table">
+        <thead>
+          <tr>
+            <th style="width: 140px;">Verdict & Status</th>
+            <th style="width: 130px;">Risk Score</th>
+            <th>Sender & Subject</th>
+            <th>Threat Reasons</th>
+            <th style="width: 110px;">Scanned</th>
+            <th style="width: 120px; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="messages-tbody">
+          {% if messages %}
+            {% for msg in messages %}
+              <tr class="message-row" data-id="{{ msg.id }}" data-status="{{ msg.status }}" data-verdict="{{ msg.verdict }}" data-sender="{{ msg.sender|lower }}" data-subject="{{ msg.subject|lower }}" data-reason="{{ msg.reason|lower }}">
+                <td>
+                  {% if msg.status == 'quarantined' %}
+                    <span class="badge badge-danger">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                      </svg>
+                      Quarantined
+                    </span>
+                  {% elif msg.status == 'review' %}
+                    <span class="badge badge-warning">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      Needs Review
+                    </span>
+                  {% else %}
+                    <span class="badge badge-success">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M20 6L9 17l-5-5"/>
+                      </svg>
+                      Delivered
+                    </span>
+                  {% endif %}
+                  
+                  {% if msg.reviewed_verdict %}
+                    <div class="analyst-override-tag" title="Analyst verified: {{ msg.reviewed_verdict }}">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                      </svg>
+                      Audited
+                    </div>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% set score_pct = (msg.score * 100)|round|int %}
+                  <div class="score-cell">
+                    <div class="score-meta">
+                      <strong class="{% if score_pct >= 55 %}text-danger{% elif score_pct >= 35 %}text-warning{% else %}text-success{% endif %}">
+                        {{ score_pct }}%
+                      </strong>
+                      <span class="score-level">
+                        {% if score_pct >= 75 %}High
+                        {% elif score_pct >= 55 %}Med-High
+                        {% elif score_pct >= 35 %}Suspicious
+                        {% else %}Clean{% endif %}
+                      </span>
+                    </div>
+                    <div class="progress-bar-bg">
+                      <div 
+                        class="progress-bar-fill {% if score_pct >= 55 %}fill-danger{% elif score_pct >= 35 %}fill-warning{% else %}fill-success{% endif %}" 
+                        style="width: {{ score_pct }}%;"
+                      ></div>
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="email-meta-cell">
+                    <span class="email-sender" title="{{ msg.sender }}">{{ msg.sender }}</span>
+                    <strong class="email-subject" title="{{ msg.subject }}">{{ msg.subject }}</strong>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="reason-cell" title="{{ msg.reason }}">
+                    {% for item in msg.reason.split(';') %}
+                      {% set trimmed = item.strip() %}
+                      {% if trimmed %}
+                        <span class="reason-pill">{{ trimmed }}</span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="time-cell" title="{{ msg.received_at }}">{{ msg.received_at[:16] }}</span>
+                </td>
+
+                <td style="text-align: right;">
+                  <div class="table-actions">
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline" 
+                      onclick="openDetailModal({{ msg.id }}, {{ msg|tojson|safe }})"
+                      title="Inspect message & override verdict"
+                    >
+                      Inspect
+                    </button>
+                    <form action="{{ url_for('main.delete_message', message_id=msg.id) }}" method="POST" class="inline-form" onsubmit="return confirm('Delete message #{{ msg.id }}?');">
+                      <button type="submit" class="btn-icon-danger" title="Delete record">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr id="empty-row">
+              <td colspan="6" class="empty-state">
+                <div class="empty-content">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  <h4>No Messages In Queue</h4>
+                  <p>Use the Email Threat Scanner to scan your first message.</p>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+          <tr id="no-filter-match-row" class="hidden">
+            <td colspan="6" class="empty-state">
+              <div class="empty-content">
+                <h4>No Matching Records</h4>
+                <p>No messages match your current search and filter criteria.</p>
+                <button type="button" class="btn btn-sm btn-outline mt-2" onclick="resetFilters()">Reset All Filters</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Inspection Modal -->
+<div class="modal-backdrop hidden" id="detail-modal" onclick="closeModalOnBackdrop(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3 class="modal-title" id="modal-title">Message Inspection</h3>
+        <span id="modal-status-badge" class="badge"></span>
+      </div>
+      <button type="button" class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">Sender</span>
+          <span class="meta-value font-mono" id="modal-sender"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Received At</span>
+          <span class="meta-value font-mono" id="modal-time"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Risk Rating</span>
+          <span class="meta-value font-bold" id="modal-score"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Current Status</span>
+          <span class="meta-value" id="modal-status"></span>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <span class="section-title">Subject Line</span>
+        <div class="subject-box" id="modal-subject"></div>
+      </div>
+
+      <div class="modal-section">
+        <span class="section-title">Threat Reasons & Heuristic Indicators</span>
+        <div class="reasons-box" id="modal-reasons"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="section-title-row">
+          <span class="section-title">Message Body Content</span>
+          <button type="button" class="btn-text btn-sm" onclick="copyModalBody()">Copy Text</button>
+        </div>
+        <pre class="body-box" id="modal-body"></pre>
+      </div>
+
+      <!-- Security Analyst Override Disposition -->
+      <div class="modal-review-panel">
+        <div class="review-panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          Security Analyst Disposition Override
+        </div>
+        <p class="review-panel-desc">Manually change status if this message is a false positive or confirmed threat.</p>
+        
+        <form id="modal-review-form" method="POST" action="">
+          <div class="review-button-group">
+            <button type="submit" name="decision" value="phishing" class="btn btn-danger flex-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              Quarantine as Phishing
+            </button>
+            <button type="submit" name="decision" value="legitimate" class="btn btn-success flex-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              Deliver as Legitimate
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

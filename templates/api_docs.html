@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}REST API Documentation - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1 class="page-title">PhishGuard REST API Explorer</h1>
+      <p class="page-subtitle">Programmatic interface for integrating PhishGuard heuristic screening into mail transfer agents (MTAs) and SIEM pipelines.</p>
+    </div>
+    <div class="header-actions">
+      <a href="{{ url_for('main.api_messages') }}" target="_blank" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+        Open Raw JSON Feed
+      </a>
+    </div>
+  </div>
+
+  <div class="api-endpoints-list">
+
+    <!-- Endpoint 1: POST /api/analyze -->
+    <div class="api-endpoint-card">
+      <div class="endpoint-header">
+        <span class="http-method method-post">POST</span>
+        <span class="endpoint-path">/api/analyze</span>
+      </div>
+      <p class="endpoint-desc">
+        Perform a live heuristic threat evaluation on raw email text, sender domain, and URLs without saving to the database.
+      </p>
+
+      <div>
+        <span class="meta-label">Request Body (JSON)</span>
+        <pre class="code-block">{
+  "sender": "security@paypaI-notice.example",
+  "subject": "Action required: Account suspended immediately",
+  "body": "Verify your identity immediately at http://paypal-verify.example/login to avoid suspension."
+}</pre>
+      </div>
+
+      <div>
+        <span class="meta-label">Response (200 OK)</span>
+        <pre class="code-block">{
+  "verdict": "phishing",
+  "score": 0.99,
+  "status": "quarantined",
+  "reason": "Insecure HTTP or shortened link detected; Brand or account credential wording in URL; Urgent or threatening language; Sender identity/domain mismatch",
+  "reasons": [
+    "Insecure HTTP or shortened link detected",
+    "Brand or account credential wording in URL",
+    "Urgent or threatening language (action required, immediately, suspended)",
+    "Sender identity/domain mismatch or spoofing indicator"
+  ]
+}</pre>
+      </div>
+
+      <div class="mt-2">
+        <button type="button" class="btn btn-primary btn-sm" onclick="testAnalyzeApi()">
+          Run Live Test Call
+        </button>
+        <div id="live-api-test-output" class="code-block mt-2 hidden"></div>
+      </div>
+    </div>
+
+    <!-- Endpoint 2: GET /api/messages -->
+    <div class="api-endpoint-card">
+      <div class="endpoint-header">
+        <span class="http-method method-get">GET</span>
+        <span class="endpoint-path">/api/messages</span>
+      </div>
+      <p class="endpoint-desc">
+        Retrieve the latest scanned messages, threat scores, heuristic verdicts, and reviewer disposition records.
+      </p>
+
+      <div>
+        <span class="meta-label">Sample Curl Request</span>
+        <pre class="code-block">curl -X GET http://127.0.0.1:5000/api/messages</pre>
+      </div>
+
+      <div>
+        <span class="meta-label">Response (200 OK)</span>
+        <pre class="code-block">[
+  {
+    "id": 1,
+    "sender": "billing@paypaI-security.example",
+    "subject": "Action required: account suspended",
+    "score": 0.99,
+    "verdict": "phishing",
+    "status": "quarantined",
+    "reason": "Insecure HTTP or shortened link detected; Urgent or threatening language",
+    "received_at": "2026-11-17 14:15:00",
+    "reviewed_verdict": null
+  }
+]</pre>
+      </div>
+    </div>
+
+    <!-- Endpoint 3: GET /api/messages/<id> -->
+    <div class="api-endpoint-card">
+      <div class="endpoint-header">
+        <span class="http-method method-get">GET</span>
+        <span class="endpoint-path">/api/messages/&lt;message_id&gt;</span>
+      </div>
+      <p class="endpoint-desc">
+        Retrieve complete details for a single message record, including the full body and reviewer override information.
+      </p>
+
+      <div>
+        <span class="meta-label">Sample Curl Request</span>
+        <pre class="code-block">curl -X GET http://127.0.0.1:5000/api/messages/1</pre>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function testAnalyzeApi() {
+  const outputEl = document.getElementById('live-api-test-output');
+  outputEl.classList.remove('hidden');
+  outputEl.textContent = 'Executing request to /api/analyze...';
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender: 'alerts@fake-bank.example',
+        subject: 'Urgent: Suspended profile alert',
+        body: 'Click here immediately to verify account: http://bank-login.example/auth'
+      })
+    });
+    const data = await res.json();
+    outputEl.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    outputEl.textContent = 'Error: ' + err.message;
+  }
+}
+</script>
+{% endblock %}

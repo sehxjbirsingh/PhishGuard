@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard - Cyber Defense Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* --------------------------------------------------------------------------
+       GLOBAL SCROLLBAR REMOVAL (Zero scrollbars visible anywhere on screen)
+       -------------------------------------------------------------------------- */
+    html, body, div, section, main, table, tbody, pre, textarea, form, ul, li {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    ::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+      background: transparent !important;
+    }
+
+    :root {
+      --bg-main: #050b08;
+      --bg-surface: #09150f;
+      --bg-card: #0d1e16;
+      --bg-card-hover: #12281e;
+      --bg-input: #06110b;
+
+      --border-subtle: #142f22;
+      --border-card: #1b402e;
+      --border-focus: #00ff9d;
+
+      --text-main: #e2fbf0;
+      --text-muted: #86ab97;
+      --text-dim: #4f7461;
+      --text-bright: #ffffff;
+
+      --cyber-green: #00ff9d;
+      --cyber-green-dim: #10b981;
+      --cyber-glow: rgba(0, 255, 157, 0.28);
+      --cyber-glow-strong: rgba(0, 255, 157, 0.45);
+
+      --color-danger: #ff3366;
+      --color-danger-bg: rgba(255, 51, 102, 0.12);
+      --color-danger-border: rgba(255, 51, 102, 0.35);
+
+      --color-warning: #ffb800;
+      --color-warning-bg: rgba(255, 184, 0, 0.12);
+      --color-warning-border: rgba(255, 184, 0, 0.35);
+
+      --color-success: #00ff9d;
+      --color-success-bg: rgba(0, 255, 157, 0.12);
+      --color-success-border: rgba(0, 255, 157, 0.35);
+
+      --color-purple: #a78bfa;
+      --color-purple-bg: rgba(167, 139, 250, 0.12);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      background-image: 
+        radial-gradient(ellipse at 15% 0%, rgba(0, 255, 157, 0.09) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 15%, rgba(16, 185, 129, 0.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 100%, rgba(5, 150, 105, 0.05) 0%, transparent 70%),
+        linear-gradient(rgba(0, 255, 157, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 157, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 14.5px;
+      line-height: 1.55;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navbar */
+    .navbar {
+      background-color: rgba(9, 21, 15, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 157, 0.1);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-bright);
+      cursor: pointer;
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, #059669, #00ff9d);
+      color: #03140a;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--cyber-glow);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #ffffff, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: rgba(0, 255, 157, 0.12);
+      color: var(--cyber-green);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid rgba(0, 255, 157, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 10px rgba(0, 255, 157, 0.15);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.95rem;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.88rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-btn:hover {
+      color: var(--text-bright);
+      background-color: rgba(0, 255, 157, 0.06);
+      border-color: rgba(0, 255, 157, 0.15);
+    }
+
+    .nav-btn.active {
+      color: var(--cyber-green);
+      background-color: rgba(0, 255, 157, 0.12);
+      border-color: rgba(0, 255, 157, 0.35);
+      box-shadow: 0 0 16px rgba(0, 255, 157, 0.18);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      background-color: rgba(0, 255, 157, 0.08);
+      border: 1px solid rgba(0, 255, 157, 0.25);
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--cyber-green);
+      box-shadow: 0 0 14px rgba(0, 255, 157, 0.15);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--cyber-green);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px var(--cyber-green);
+      animation: pulse-cyber 2s infinite;
+    }
+
+    @keyframes pulse-cyber {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(0, 255, 157, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
+    }
+
+    /* Main Container */
+    .main-content {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .view-section {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    .view-section.active {
+      display: flex;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.15rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(0, 255, 157, 0.08);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--cyber-green);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 157, 0.15);
+    }
+
+    .stat-card.border-danger { border-left: 4px solid var(--color-danger); }
+    .stat-card.border-warning { border-left: 4px solid var(--color-warning); }
+    .stat-card.border-success { border-left: 4px solid var(--cyber-green); }
+    .stat-card.border-cyan { border-left: 4px solid #34d399; }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .icon-red { background: rgba(255, 51, 102, 0.15); color: #ff3366; }
+    .icon-amber { background: rgba(255, 184, 0, 0.15); color: #ffb800; }
+    .icon-emerald { background: rgba(0, 255, 157, 0.15); color: var(--cyber-green); }
+    .icon-purple { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+    .icon-cyan { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+
+    .stat-value {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text-bright);
+    }
+
+    .stat-subtext {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    /* Cards */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(0, 255, 157, 0.06);
+    }
+
+    .card-header {
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header-split {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Quick Action Cards */
+    .action-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .action-cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .action-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-surface));
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--cyber-green);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 157, 0.2);
+    }
+
+    .action-card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .action-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .action-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .action-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cyber-green);
+    }
+
+    /* Scanner Form */
+    .scanner-center-layout {
+      max-width: 880px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .preset-section {
+      background-color: rgba(6, 17, 11, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .preset-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    .preset-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .btn-preset {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn-preset:hover {
+      background-color: var(--bg-card-hover);
+      border-color: var(--cyber-green);
+      color: var(--text-bright);
+      box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .badge-dot-danger { background-color: var(--color-danger); box-shadow: 0 0 6px var(--color-danger); }
+    .badge-dot-warning { background-color: var(--color-warning); box-shadow: 0 0 6px var(--color-warning); }
+    .badge-dot-success { background-color: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green); }
+
+    .scanner-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    @media (max-width: 680px) {
+      .form-row { flex-direction: column; }
+    }
+
+    .flex-1 { flex: 1; }
+    .flex-2 { flex: 2; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      color: var(--text-bright);
+      font-family: inherit;
+      font-size: 0.92rem;
+      padding: 0.75rem 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus {
+      border-color: var(--cyber-green);
+      box-shadow: 0 0 0 3px var(--cyber-glow);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 135px;
+      line-height: 1.5;
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--cyber-green);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-text:hover { text-decoration: underline; }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 0.68rem 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #059669 0%, #00ff9d 100%);
+      color: #03140a;
+      box-shadow: 0 0 20px rgba(0, 255, 157, 0.35);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 0 28px rgba(0, 255, 157, 0.55);
+    }
+
+    .btn-secondary {
+      background-color: rgba(0, 255, 157, 0.06);
+      color: var(--text-bright);
+      border-color: rgba(0, 255, 157, 0.25);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(0, 255, 157, 0.12);
+      border-color: var(--cyber-green);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--cyber-green);
+      border-color: rgba(0, 255, 157, 0.35);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(0, 255, 157, 0.1);
+      border-color: var(--cyber-green);
+      box-shadow: 0 0 14px rgba(0, 255, 157, 0.2);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #dc2626, #ff3366);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(255, 51, 102, 0.35);
+    }
+
+    .btn-danger:hover {
+      opacity: 0.95;
+      box-shadow: 0 0 24px rgba(255, 51, 102, 0.55);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #00ff9d);
+      color: #03140a;
+      box-shadow: 0 0 16px rgba(0, 255, 157, 0.35);
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-icon-danger {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon-danger:hover {
+      color: var(--color-danger);
+      background-color: var(--color-danger-bg);
+    }
+
+    /* Live Preview Result Card */
+    .live-scan-card {
+      background: rgba(6, 17, 11, 0.95);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      box-shadow: 0 0 20px rgba(0, 255, 157, 0.08);
+    }
+
+    .live-scan-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .live-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-bright);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .meter-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 7px;
+      background-color: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    .fill-danger { background: linear-gradient(90deg, #ff3366, #ff0033); box-shadow: 0 0 10px rgba(255, 51, 102, 0.5); }
+    .fill-warning { background: linear-gradient(90deg, #ffb800, #ff9900); box-shadow: 0 0 10px rgba(255, 184, 0, 0.5); }
+    .fill-success { background: linear-gradient(90deg, #059669, #00ff9d); box-shadow: 0 0 10px rgba(0, 255, 157, 0.5); }
+
+    .live-reasons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    /* Toolbar, Search & Filter */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      color: var(--text-bright);
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 0.65rem 2.2rem 0.65rem 2.4rem;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--cyber-green);
+      box-shadow: 0 0 0 3px var(--cyber-glow);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+
+    .filter-pill:hover {
+      color: var(--text-bright);
+      border-color: var(--border-focus);
+    }
+
+    .filter-pill.active {
+      background-color: rgba(0, 255, 157, 0.15);
+      border-color: var(--cyber-green);
+      color: var(--cyber-green);
+      box-shadow: 0 0 12px rgba(0, 255, 157, 0.2);
+    }
+
+    .filter-pill.filter-quarantined.active {
+      background-color: var(--color-danger-bg);
+      border-color: var(--color-danger);
+      color: #ff3366;
+    }
+
+    .filter-pill.filter-review.active {
+      background-color: var(--color-warning-bg);
+      border-color: var(--color-warning);
+      color: #ffb800;
+    }
+
+    .filter-pill.filter-delivered.active {
+      background-color: var(--color-success-bg);
+      border-color: var(--cyber-green);
+      color: var(--cyber-green);
+    }
+
+    .pill-count {
+      background-color: rgba(255, 255, 255, 0.08);
+      font-size: 0.72rem;
+      padding: 1px 6px;
+      border-radius: 9999px;
+    }
+
+    /* Table */
+    .table-responsive {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      background-color: var(--bg-surface);
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .data-table th {
+      background-color: rgba(6, 17, 11, 0.98);
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-card);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    .email-meta-cell {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .email-sender {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .email-subject {
+      font-size: 0.88rem;
+      color: var(--text-bright);
+    }
+
+    .reason-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .reason-pill {
+      background-color: rgba(0, 255, 157, 0.05);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+    }
+
+    .time-cell {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .badge-danger {
+      background-color: var(--color-danger-bg);
+      border: 1px solid var(--color-danger-border);
+      color: #ff3366;
+    }
+
+    .badge-warning {
+      background-color: var(--color-warning-bg);
+      border: 1px solid var(--color-warning-border);
+      color: #ffb800;
+    }
+
+    .badge-success {
+      background-color: var(--color-success-bg);
+      border: 1px solid var(--color-success-border);
+      color: var(--cyber-green);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 255, 157, 0.1);
+      overflow: hidden;
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover { color: var(--text-bright); }
+
+    .modal-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+    }
+
+    .modal-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+    }
+
+    .meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .meta-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); }
+    .meta-value { font-size: 0.88rem; color: var(--text-bright); }
+
+    .subject-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .body-box {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .modal-review-panel {
+      background: linear-gradient(135deg, rgba(13, 30, 22, 0.9), rgba(6, 17, 11, 0.95));
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .review-button-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Confusion Matrix */
+    .eval-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .eval-grid { grid-template-columns: 1fr; }
+    }
+
+    .confusion-matrix {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 6px;
+      text-align: center;
+    }
+
+    .cm-header-group {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .cm-col-label, .cm-row-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 0.5rem;
+    }
+
+    .cm-vertical-label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .cm-cell {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius-md);
+    }
+
+    .cm-tp, .cm-tn { background-color: var(--color-success-bg); border: 1px solid var(--color-success-border); }
+    .cm-fp { background-color: var(--color-warning-bg); border: 1px solid var(--color-warning-border); }
+    .cm-fn { background-color: var(--color-danger-bg); border: 1px solid var(--color-danger-border); }
+
+    .cm-cell-number { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .cm-cell-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; }
+
+    /* Footer */
+    .footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-subtle);
+      background-color: rgba(6, 17, 11, 0.98);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .footer-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-brand { font-weight: 700; font-size: 0.88rem; color: var(--text-bright); }
+    .footer-desc { font-size: 0.78rem; color: var(--text-dim); }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .text-danger { color: #ff3366 !important; }
+    .text-warning { color: #ffb800 !important; }
+    .text-success { color: var(--cyber-green) !important; }
+    .text-cyan { color: #34d399 !important; }
+    .text-purple { color: #c084fc !important; }
+    .font-mono { font-family: var(--font-mono); }
+    .font-bold { font-weight: 700; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" onclick="navigateTo('dashboard')">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">PhishGuard</span>
+          <span class="brand-badge">Cyber Defense</span>
+        </div>
+      </div>
+
+      <!-- Functional Navigation Links -->
+      <nav class="nav-links">
+        <button type="button" class="nav-btn active" id="nav-dashboard" onclick="navigateTo('dashboard')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="7" height="9" x="3" y="3" rx="1"/>
+            <rect width="7" height="5" x="14" y="3" rx="1"/>
+            <rect width="7" height="9" x="14" y="12" rx="1"/>
+            <rect width="7" height="5" x="3" y="16" rx="1"/>
+          </svg>
+          Dashboard
+        </button>
+
+        <button type="button" class="nav-btn" id="nav-scanner" onclick="navigateTo('scanner')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M12 12v9"/>
+            <path d="m8 17 4 4 4-4"/>
+          </svg>
+          Email Scanner
+        </button>
+
+        <button type="button" class="nav-btn" id="nav-quarantine" onclick="navigateTo('quarantine')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M7 8h10"/>
+            <path d="M7 12h10"/>
+            <path d="M7 16h10"/>
+          </svg>
+          Quarantine Queue
+        </button>
+
+        <button type="button" class="nav-btn" id="nav-evaluation" onclick="navigateTo('evaluation')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" x2="18" y1="20" y2="10"/>
+            <line x1="12" x2="12" y1="20" y2="4"/>
+            <line x1="6" x2="6" y1="20" y2="14"/>
+          </svg>
+          Model Evaluation
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Shield Online</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="toast-banner" class="hidden" style="max-width: 1400px; margin: 1rem auto 0; padding: 0 1.5rem; width: 100%;">
+    <div id="toast-box" class="card" style="padding: 0.85rem 1.25rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; border-color: var(--cyber-green);">
+      <span id="toast-text"></span>
+      <button type="button" onclick="document.getElementById('toast-banner').classList.add('hidden')" style="background: none; border: none; color: inherit; font-size: 1.3rem; cursor: pointer;">&times;</button>
+    </div>
+  </div>
+
+  <main class="main-content">
+
+    <!-- PAGE 1: EXECUTIVE DASHBOARD -->
+    <section class="view-section active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Executive Security Dashboard</h1>
+          <p class="page-subtitle">Real-time threat telemetry, detection stats, and fleet health overview.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn btn-primary" onclick="navigateTo('scanner')">
+            + Scan New Email
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="navigateTo('quarantine')">
+            Open Quarantine Queue
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Analyzed</span>
+            <div class="stat-icon icon-blue">📊</div>
+          </div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-subtext">Cumulative scanned messages</div>
+        </div>
+
+        <div class="stat-card border-danger">
+          <div class="stat-header">
+            <span class="stat-label">Quarantined</span>
+            <div class="stat-icon icon-red">🚨</div>
+          </div>
+          <div class="stat-value text-danger" id="stat-quarantined">0</div>
+          <div class="stat-subtext">High risk threats intercepted</div>
+        </div>
+
+        <div class="stat-card border-warning">
+          <div class="stat-header">
+            <span class="stat-label">Needs Review</span>
+            <div class="stat-icon icon-amber">⚠️</div>
+          </div>
+          <div class="stat-value text-warning" id="stat-review">0</div>
+          <div class="stat-subtext">Borderline suspicious emails</div>
+        </div>
+
+        <div class="stat-card border-success">
+          <div class="stat-header">
+            <span class="stat-label">Delivered Safe</span>
+            <div class="stat-icon icon-emerald">🛡️</div>
+          </div>
+          <div class="stat-value text-success" id="stat-delivered">0</div>
+          <div class="stat-subtext">Verified legitimate messages</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Analyst Audits</span>
+            <div class="stat-icon icon-purple">⚖️</div>
+          </div>
+          <div class="stat-value text-purple" id="stat-overridden">0</div>
+          <div class="stat-subtext">Manual disposition overrides</div>
+        </div>
+
+        <div class="stat-card border-cyan">
+          <div class="stat-header">
+            <span class="stat-label">Threat Index</span>
+            <div class="stat-icon icon-cyan">🎯</div>
+          </div>
+          <div class="stat-value text-cyan" id="stat-avg-score">0%</div>
+          <div class="stat-subtext">Average fleet threat score</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards -->
+      <div class="action-cards-grid">
+        <div class="action-card" onclick="navigateTo('scanner')">
+          <div>
+            <div class="action-card-header">
+              <div class="action-icon icon-blue">🔍</div>
+              <h3 class="action-title">Email Threat Scanner</h3>
+            </div>
+            <p class="action-desc mt-2">
+              Run real-time heuristic screening on incoming messages, test attack scenarios, and calculate threat scores.
+            </p>
+          </div>
+          <div class="action-footer">Launch Scanner &rarr;</div>
+        </div>
+
+        <div class="action-card" onclick="navigateTo('quarantine')">
+          <div>
+            <div class="action-card-header">
+              <div class="action-icon icon-red">🛡️</div>
+              <h3 class="action-title">Quarantine Queue</h3>
+            </div>
+            <p class="action-desc mt-2">
+              Filter and inspect intercepted threats, review suspicious items, and manually override security dispositions.
+            </p>
+          </div>
+          <div class="action-footer">Open Threat Queue &rarr;</div>
+        </div>
+
+        <div class="action-card" onclick="navigateTo('evaluation')">
+          <div>
+            <div class="action-card-header">
+              <div class="action-icon icon-purple">📈</div>
+              <h3 class="action-title">Model Evaluation</h3>
+            </div>
+            <p class="action-desc mt-2">
+              View the Confusion Matrix (TP, TN, FP, FN), benchmark Accuracy and Precision, and import labeled CSV datasets.
+            </p>
+          </div>
+          <div class="action-footer">View Benchmark &rarr;</div>
+        </div>
+      </div>
+
+      <!-- Recent Incidents Table -->
+      <div class="card">
+        <div class="card-header card-header-split">
+          <div>
+            <h2 class="card-title">Recent Intercepted Incidents</h2>
+            <p class="card-subtitle">Latest messages processed by the heuristic analysis engine</p>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="navigateTo('quarantine')">
+            View All in Quarantine &rarr;
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Status</th>
+                <th style="width: 120px;">Risk Score</th>
+                <th>Sender & Subject</th>
+                <th>Primary Trigger</th>
+                <th style="width: 100px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: LIVE EMAIL SCANNER -->
+    <section class="view-section scanner-center-layout" id="view-scanner">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Live Email Threat Scanner</h1>
+          <p class="page-subtitle">Analyze suspicious messages, links, and urgent language cues using heuristic rules.</p>
+        </div>
+        <button type="button" class="btn btn-outline" onclick="navigateTo('quarantine')">
+          View Quarantine Queue
+        </button>
+      </div>
+
+      <div class="card">
+        <!-- 1-Click Presets -->
+        <div class="preset-section">
+          <div class="preset-label">1-Click Test Scenarios:</div>
+          <div class="preset-buttons">
+            <button type="button" class="btn btn-preset" onclick="loadSamplePreset('paypal')">
+              <span class="badge-dot badge-dot-danger"></span> PayPal Phishing
+            </button>
+            <button type="button" class="btn btn-preset" onclick="loadSamplePreset('mailbox')">
+              <span class="badge-dot badge-dot-danger"></span> Mailbox Storage Scam
+            </button>
+            <button type="button" class="btn btn-preset" onclick="loadSamplePreset('payroll')">
+              <span class="badge-dot badge-dot-warning"></span> Payroll Direct Deposit
+            </button>
+            <button type="button" class="btn btn-preset" onclick="loadSamplePreset('bank')">
+              <span class="badge-dot badge-dot-success"></span> Legitimate Bank Alert
+            </button>
+            <button type="button" class="btn btn-preset" onclick="loadSamplePreset('lunch')">
+              <span class="badge-dot badge-dot-success"></span> Safe Lunch Invite
+            </button>
+          </div>
+        </div>
+
+        <!-- Scanner Inputs -->
+        <form id="standalone-scanner-form" onsubmit="handleFormSubmit(event)" class="scanner-form">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Sender Address <span style="color: var(--color-danger)">*</span></label>
+              <input type="text" id="scan-sender" class="form-control" placeholder="e.g. security@paypaI-verify.example" required>
+            </div>
+            <div class="form-group flex-2">
+              <label class="form-label">Subject Line <span style="color: var(--color-danger)">*</span></label>
+              <input type="text" id="scan-subject" class="form-control" placeholder="e.g. Action required: Account suspended immediately" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label">Message Body / Content / URLs <span style="color: var(--color-danger)">*</span></label>
+              <button type="button" class="btn-text" onclick="clearScannerForm()">Clear Fields</button>
+            </div>
+            <textarea id="scan-body" rows="6" class="form-control" placeholder="Paste email content or URLs..." required></textarea>
+          </div>
+
+          <!-- Real-time Preview Result -->
+          <div id="scanner-preview-card" class="live-scan-card hidden">
+            <div class="live-scan-header">
+              <span class="live-title">Instant Risk Assessment</span>
+              <span id="preview-badge" class="badge"></span>
+            </div>
+            <div>
+              <div class="meter-info">
+                <span>Calculated Risk Score</span>
+                <strong id="preview-score-text">0%</strong>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="preview-score-bar" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div id="preview-reasons" class="live-reasons"></div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary flex-1" onclick="performLivePreview()">
+              Live Preview Check
+            </button>
+            <button type="submit" class="btn btn-primary flex-2">
+              Scan & Quarantine Threat
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- PAGE 3: QUARANTINE QUEUE -->
+    <section class="view-section" id="view-quarantine">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Quarantine Queue & Threat Repository</h1>
+          <p class="page-subtitle">Inspect intercepted phishing attacks, review flagged items, and override verdicts.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn btn-primary" onclick="navigateTo('scanner')">
+            + Scan New Email
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="queue-search" class="search-input" placeholder="Search sender, subject, or threat triggers..." onkeyup="filterQueueTable()">
+          </div>
+
+          <div class="filter-pills">
+            <button type="button" class="filter-pill active" data-qfilter="all" onclick="setQueueFilter('all', this)">
+              All <span class="pill-count" id="count-all">0</span>
+            </button>
+            <button type="button" class="filter-pill filter-quarantined" data-qfilter="quarantined" onclick="setQueueFilter('quarantined', this)">
+              Quarantined <span class="pill-count" id="count-quarantined">0</span>
+            </button>
+            <button type="button" class="filter-pill filter-review" data-qfilter="review" onclick="setQueueFilter('review', this)">
+              Needs Review <span class="pill-count" id="count-review">0</span>
+            </button>
+            <button type="button" class="filter-pill filter-delivered" data-qfilter="delivered" onclick="setQueueFilter('delivered', this)">
+              Delivered <span class="pill-count" id="count-delivered">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Verdict & Status</th>
+                <th style="width: 130px;">Risk Score</th>
+                <th>Sender & Subject</th>
+                <th>Threat Reasons</th>
+                <th style="width: 110px;">Scanned</th>
+                <th style="width: 130px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="queue-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: MODEL EVALUATION & CONFUSION MATRIX -->
+    <section class="view-section" id="view-evaluation">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Heuristic Model Evaluation & Confusion Matrix</h1>
+          <p class="page-subtitle">Benchmark the heuristic detection accuracy, precision, and recall against ground truth labels.</p>
+        </div>
+        <button type="button" class="btn btn-outline" onclick="downloadSampleDatasetCSV()">
+          Download Sample CSV Template
+        </button>
+      </div>
+
+      <!-- Evaluation Metric Cards -->
+      <div class="stats-grid">
+        <div class="stat-card border-cyan">
+          <div class="stat-header">
+            <span class="stat-label">Model Accuracy</span>
+            <div class="stat-icon icon-cyan">🎯</div>
+          </div>
+          <div class="stat-value text-cyan" id="eval-accuracy">0%</div>
+          <div class="stat-subtext">Overall correct classifications</div>
+        </div>
+
+        <div class="stat-card border-success">
+          <div class="stat-header">
+            <span class="stat-label">Precision (Phishing)</span>
+            <div class="stat-icon icon-emerald">✅</div>
+          </div>
+          <div class="stat-value text-success" id="eval-precision">0%</div>
+          <div class="stat-subtext">TP / (TP + FP) - Low false alarms</div>
+        </div>
+
+        <div class="stat-card border-purple">
+          <div class="stat-header">
+            <span class="stat-label">Recall / Sensitivity</span>
+            <div class="stat-icon icon-purple">🛡️</div>
+          </div>
+          <div class="stat-value text-purple" id="eval-recall">0%</div>
+          <div class="stat-subtext">TP / (TP + FN) - Real threats caught</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">F1-Score</span>
+            <div class="stat-icon icon-blue">⚖️</div>
+          </div>
+          <div class="stat-value" id="eval-f1">0%</div>
+          <div class="stat-subtext">Harmonic mean of precision & recall</div>
+        </div>
+      </div>
+
+      <!-- Confusion Matrix & CSV Upload Grid -->
+      <div class="eval-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Confusion Matrix Grid</h2>
+            <p class="card-subtitle">Predicted verdicts versus verified ground truth labels</p>
+          </div>
+
+          <table class="confusion-matrix">
+            <thead>
+              <tr>
+                <th colspan="2" rowspan="2"></th>
+                <th colspan="2" class="cm-header-group">Actual Ground Truth</th>
+              </tr>
+              <tr>
+                <th class="cm-col-label">Actual Phishing (1)</th>
+                <th class="cm-col-label">Actual Legitimate (0)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th rowspan="2" class="cm-vertical-label">Predicted</th>
+                <th class="cm-row-label">Phishing</th>
+                <td class="cm-cell cm-tp">
+                  <div class="cm-cell-number text-success" id="cm-tp">0</div>
+                  <div class="cm-cell-desc">True Positive (TP)</div>
+                </td>
+                <td class="cm-cell cm-fp">
+                  <div class="cm-cell-number text-warning" id="cm-fp">0</div>
+                  <div class="cm-cell-desc">False Positive (FP)</div>
+                </td>
+              </tr>
+              <tr>
+                <th class="cm-row-label">Legitimate</th>
+                <td class="cm-cell cm-fn">
+                  <div class="cm-cell-number text-danger" id="cm-fn">0</div>
+                  <div class="cm-cell-desc">False Negative (FN)</div>
+                </td>
+                <td class="cm-cell cm-tn">
+                  <div class="cm-cell-number text-success" id="cm-tn">0</div>
+                  <div class="cm-cell-desc">True Negative (TN)</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Import Labeled Dataset (CSV)</h2>
+            <p class="card-subtitle">Upload CSV with columns: sender, subject, body, label (1 or 0)</p>
+          </div>
+
+          <div style="border: 2px dashed var(--border-card); padding: 2.2rem; border-radius: var(--radius-md); text-align: center; cursor: pointer;" onclick="document.getElementById('csv-upload-input').click()">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📄</div>
+            <strong style="color: var(--cyber-green);">Click to upload CSV dataset</strong>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.3rem;">Supports CSV with sender, subject, body/url, label</p>
+            <input type="file" id="csv-upload-input" accept=".csv" class="hidden" onchange="handleCSVUpload(this)">
+          </div>
+
+          <div class="mt-4">
+            <button type="button" class="btn btn-outline btn-sm" onclick="downloadSampleDatasetCSV()">
+              📥 Download Sample Dataset CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Inspection Modal -->
+  <div class="modal-backdrop hidden" id="inspection-modal" onclick="if(event.target.id==='inspection-modal') closeInspectModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-heading" style="color: #fff; font-size: 1.15rem;">Message Inspection</h3>
+        <button type="button" class="modal-close" onclick="closeInspectModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Sender</span>
+            <span class="meta-value font-mono" id="modal-sender"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Scanned At</span>
+            <span class="meta-value font-mono" id="modal-time"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Risk Rating</span>
+            <span class="meta-value font-bold" id="modal-score"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value" id="modal-status"></span>
+          </div>
+        </div>
+
+        <div>
+          <span class="meta-label">Subject Line</span>
+          <div class="subject-box mt-2" id="modal-subject"></div>
+        </div>
+
+        <div>
+          <span class="meta-label">Threat Reasons & Heuristics</span>
+          <div class="live-reasons mt-2" id="modal-reasons"></div>
+        </div>
+
+        <div>
+          <span class="meta-label">Message Body</span>
+          <pre class="body-box mt-2" id="modal-body"></pre>
+        </div>
+
+        <!-- Reviewer Override Actions -->
+        <div class="modal-review-panel">
+          <strong style="color: #fff;">Security Analyst Override Disposition</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Manually change status if this message is a confirmed threat or false positive:</p>
+          <div class="review-button-group">
+            <button type="button" class="btn btn-danger flex-1" onclick="applyAnalystDecision('phishing')">
+              Quarantine as Phishing
+            </button>
+            <button type="button" class="btn btn-success flex-1" onclick="applyAnalystDecision('legitimate')">
+              Deliver as Legitimate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div>
+        <div class="footer-brand">PhishGuard Cyber Defense Gateway</div>
+        <div class="footer-desc">Next-generation multi-vector heuristic screening & automated quarantine.</div>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="resetToInitialDemoData()">
+          Reset Demo Data
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const INITIAL_DATA = [
+      { id: 1, sender: "billing@paypaI-security.example", subject: "Action required: account suspended", body: "Verify your account immediately at http://paypal-verify.example/login to avoid suspension. Enter your password.", score: 0.99, verdict: "phishing", reason: "Insecure HTTP or shortened link detected; Brand or account credential wording in URL; Urgent or threatening language; Requests sensitive information", status: "quarantined", label: 1, reviewed_verdict: null, received_at: "2026-11-17 14:10" },
+      { id: 2, sender: "it-helpdesk@company.example", subject: "Mailbox storage notice", body: "Your mailbox is nearly full. Sign in at http://mailbox-reset.example to increase storage today.", score: 0.82, verdict: "phishing", reason: "Insecure HTTP or shortened link detected; Urgent or threatening language; Requests sensitive information", status: "quarantined", label: 1, reviewed_verdict: null, received_at: "2026-11-17 14:11" },
+      { id: 3, sender: "hr@company.example", subject: "Updated direct deposit form", body: "Please review the attached payroll form and submit your bank details before end of day.", score: 0.24, verdict: "legitimate", reason: "Requests sensitive information", status: "delivered", label: 1, reviewed_verdict: null, received_at: "2026-11-17 14:12" },
+      { id: 4, sender: "alerts@bank.example", subject: "New sign-in detected", body: "A sign-in was detected. If this was not you, visit https://bank.example/security using your saved bookmark.", score: 0.17, verdict: "legitimate", reason: "Sender identity deserves verification", status: "delivered", label: 0, reviewed_verdict: null, received_at: "2026-11-17 14:13" },
+      { id: 5, sender: "maya@company.example", subject: "Lunch tomorrow?", body: "Are you free to grab lunch tomorrow around noon?", score: 0.05, verdict: "legitimate", reason: "No strong phishing indicators found", status: "delivered", label: 0, reviewed_verdict: null, received_at: "2026-11-17 14:14" },
+      { id: 6, sender: "news@library.example", subject: "Your weekly reading list", body: "This week's staff picks are ready. Browse the catalogue at https://library.example/books.", score: 0.05, verdict: "legitimate", reason: "No strong phishing indicators found", status: "delivered", label: 0, reviewed_verdict: null, received_at: "2026-11-17 14:15" }
+    ];
+
+    function loadDatabase() {
+      const stored = localStorage.getItem("phishguard_messages");
+      if (stored) {
+        try { return JSON.parse(stored); } catch(e){}
+      }
+      return [...INITIAL_DATA];
+    }
+
+    function saveDatabase(data) {
+      localStorage.setItem("phishguard_messages", JSON.stringify(data));
+      refreshAllViews();
+    }
+
+    let messages = loadDatabase();
+    let currentActiveModalId = null;
+    let currentQueueFilter = 'all';
+
+    function analyzeMessage(sender, subject, body) {
+      const text = `${sender || ''} ${subject || ''} ${body || ''}`.toLowerCase();
+      let score = 0.05;
+      const reasons = [];
+
+      const urls = text.match(/https?:\/\/[^\s<>"]+/gi) || [];
+      if (urls.length > 0) {
+        const suspicious = urls.filter(u => u.includes('bit.ly') || u.includes('tinyurl.com') || u.includes('t.co') || u.startsWith('http://'));
+        if (suspicious.length > 0) {
+          score += 0.38;
+          reasons.push("Insecure HTTP or shortened link detected");
+        }
+        if (urls.some(u => /(paypa[l1]|bank|secure|verify|login|account).{0,25}(verify|secure|login|update|reset)/i.test(u))) {
+          score += 0.28;
+          reasons.push("Brand or account credential wording in URL");
+        }
+      }
+
+      const urgentWords = ["urgent", "immediately", "suspended", "verify", "action required", "expires", "avoid suspension", "today"];
+      const urgentHits = urgentWords.filter(w => text.includes(w));
+      if (urgentHits.length > 0) {
+        score += Math.min(0.24, 0.08 + 0.04 * (urgentHits.length - 1));
+        reasons.push(`Urgent or threatening language (${urgentHits.slice(0, 3).join(', ')})`);
+      }
+
+      const credWords = ["password", "bank details", "sign in", "login", "direct deposit", "account"];
+      const credHits = credWords.filter(w => text.includes(w));
+      if (credHits.length > 0) {
+        score += 0.19;
+        reasons.push("Requests sensitive credentials or financial details");
+      }
+
+      if (/@\S+\.(example|test|xyz|top)\b/i.test(sender) && /(paypa|bank|helpdesk|support)/i.test(sender)) {
+        score += 0.15;
+        reasons.push("Sender domain mismatch or spoofing indicator");
+      }
+
+      score = Math.round(Math.min(score, 0.99) * 100) / 100;
+      const verdict = score >= 0.55 ? "phishing" : "legitimate";
+      const status = verdict === "phishing" ? "quarantined" : (score >= 0.35 ? "review" : "delivered");
+
+      return {
+        score,
+        verdict,
+        status,
+        reason: reasons.length > 0 ? reasons.join('; ') : "No strong phishing indicators found",
+        reasons: reasons.length > 0 ? reasons : ["Clean message headers & text"]
+      };
+    }
+
+    function navigateTo(viewId) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      const targetSection = document.getElementById(`view-${viewId}`);
+      const targetNav = document.getElementById(`nav-${viewId}`);
+
+      if (targetSection) targetSection.classList.add('active');
+      if (targetNav) targetNav.classList.add('active');
+
+      window.scrollTo(0, 0);
+      refreshAllViews();
+    }
+
+    const PRESETS = {
+      paypal: {
+        sender: "billing@paypaI-security.example",
+        subject: "Action required: account suspended immediately",
+        body: "Verify your account immediately at http://paypal-verify.example/login to avoid suspension. Enter your password."
+      },
+      mailbox: {
+        sender: "it-helpdesk@company.example",
+        subject: "Mailbox storage notice",
+        body: "Your mailbox is nearly full. Sign in at http://mailbox-reset.example to increase storage today."
+      },
+      payroll: {
+        sender: "hr@company.example",
+        subject: "Updated direct deposit form",
+        body: "Please review the attached payroll form and submit your bank details before end of day."
+      },
+      bank: {
+        sender: "alerts@bank.example",
+        subject: "New sign-in detected",
+        body: "A sign-in was detected. If this was not you, visit https://bank.example/security using your saved bookmark."
+      },
+      lunch: {
+        sender: "maya@company.example",
+        subject: "Lunch tomorrow?",
+        body: "Are you free to grab lunch tomorrow around noon?"
+      }
+    };
+
+    function loadSamplePreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      document.getElementById('scan-sender').value = p.sender;
+      document.getElementById('scan-subject').value = p.subject;
+      document.getElementById('scan-body').value = p.body;
+      performLivePreview();
+    }
+
+    function clearScannerForm() {
+      document.getElementById('scan-sender').value = '';
+      document.getElementById('scan-subject').value = '';
+      document.getElementById('scan-body').value = '';
+      document.getElementById('scanner-preview-card').classList.add('hidden');
+    }
+
+    function performLivePreview() {
+      const sender = document.getElementById('scan-sender').value.trim();
+      const subject = document.getElementById('scan-subject').value.trim();
+      const body = document.getElementById('scan-body').value.trim();
+
+      if (!sender && !subject && !body) return;
+
+      const result = analyzeMessage(sender, subject, body);
+      const scorePct = Math.round(result.score * 100);
+
+      const card = document.getElementById('scanner-preview-card');
+      const badge = document.getElementById('preview-badge');
+      const scoreText = document.getElementById('preview-score-text');
+      const scoreBar = document.getElementById('preview-score-bar');
+      const reasonsDiv = document.getElementById('preview-reasons');
+
+      scoreText.textContent = `${scorePct}%`;
+      scoreBar.style.width = `${scorePct}%`;
+      scoreBar.className = 'progress-bar-fill ' + (scorePct >= 55 ? 'fill-danger' : (scorePct >= 35 ? 'fill-warning' : 'fill-success'));
+
+      badge.className = 'badge ' + (result.status === 'quarantined' ? 'badge-danger' : (result.status === 'review' ? 'badge-warning' : 'badge-success'));
+      badge.textContent = result.status.toUpperCase();
+
+      reasonsDiv.innerHTML = result.reasons.map(r => `<span class="reason-pill">${r}</span>`).join('');
+      card.classList.remove('hidden');
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const sender = document.getElementById('scan-sender').value.trim();
+      const subject = document.getElementById('scan-subject').value.trim();
+      const body = document.getElementById('scan-body').value.trim();
+
+      const result = analyzeMessage(sender, subject, body);
+      const newRecord = {
+        id: messages.length ? Math.max(...messages.map(m => m.id)) + 1 : 1,
+        sender,
+        subject,
+        body,
+        score: result.score,
+        verdict: result.verdict,
+        status: result.status,
+        reason: result.reason,
+        label: result.verdict === 'phishing' ? 1 : 0,
+        reviewed_verdict: null,
+        received_at: new Date().toISOString().replace('T', ' ').substring(0, 16)
+      };
+
+      messages.unshift(newRecord);
+      saveDatabase(messages);
+
+      showToast(`Scan complete: ${result.verdict.toUpperCase()} (${Math.round(result.score * 100)}% risk). Added to Quarantine Queue.`);
+      clearScannerForm();
+      navigateTo('quarantine');
+    }
+
+    function showToast(msg) {
+      const banner = document.getElementById('toast-banner');
+      const text = document.getElementById('toast-text');
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+      setTimeout(() => banner.classList.add('hidden'), 5000);
+    }
+
+    function refreshAllViews() {
+      renderDashboard();
+      renderQuarantineQueue();
+      renderEvaluation();
+    }
+
+    function renderDashboard() {
+      const total = messages.length;
+      const quarantined = messages.filter(m => m.status === 'quarantined').length;
+      const review = messages.filter(m => m.status === 'review').length;
+      const delivered = messages.filter(m => m.status === 'delivered').length;
+      const overridden = messages.filter(m => m.reviewed_verdict !== null).length;
+      const avgScore = total ? Math.round(messages.reduce((a, b) => a + b.score, 0) / total * 100) : 0;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-quarantined').textContent = quarantined;
+      document.getElementById('stat-review').textContent = review;
+      document.getElementById('stat-delivered').textContent = delivered;
+      document.getElementById('stat-overridden').textContent = overridden;
+      document.getElementById('stat-avg-score').textContent = `${avgScore}%`;
+
+      const recentTbody = document.getElementById('dashboard-recent-tbody');
+      const recent = messages.slice(0, 5);
+      if (recent.length === 0) {
+        recentTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">No messages analyzed yet.</td></tr>`;
+      } else {
+        recentTbody.innerHTML = recent.map(m => {
+          const pct = Math.round(m.score * 100);
+          return `
+            <tr>
+              <td><span class="badge ${m.status === 'quarantined' ? 'badge-danger' : (m.status === 'review' ? 'badge-warning' : 'badge-success')}">${m.status.toUpperCase()}</span></td>
+              <td><strong class="${pct >= 55 ? 'text-danger' : (pct >= 35 ? 'text-warning' : 'text-success')}">${pct}%</strong></td>
+              <td><div class="email-meta-cell"><span class="email-sender">${m.sender}</span><strong class="email-subject">${m.subject}</strong></div></td>
+              <td><span class="reason-pill">${(m.reason || '').split(';')[0]}</span></td>
+              <td style="text-align: right;"><button class="btn btn-sm btn-outline" onclick="openInspectModal(${m.id})">Inspect</button></td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    function renderQuarantineQueue() {
+      document.getElementById('count-all').textContent = messages.length;
+      document.getElementById('count-quarantined').textContent = messages.filter(m => m.status === 'quarantined').length;
+      document.getElementById('count-review').textContent = messages.filter(m => m.status === 'review').length;
+      document.getElementById('count-delivered').textContent = messages.filter(m => m.status === 'delivered').length;
+
+      filterQueueTable();
+    }
+
+    function setQueueFilter(filterVal, el) {
+      currentQueueFilter = filterVal;
+      document.querySelectorAll('.filter-pills .filter-pill').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      filterQueueTable();
+    }
+
+    function filterQueueTable() {
+      const q = (document.getElementById('queue-search')?.value || '').toLowerCase().trim();
+      const filtered = messages.filter(m => {
+        const matchesType = (currentQueueFilter === 'all') || (m.status === currentQueueFilter);
+        const matchesSearch = !q || m.sender.toLowerCase().includes(q) || m.subject.toLowerCase().includes(q) || m.reason.toLowerCase().includes(q);
+        return matchesType && matchesSearch;
+      });
+
+      const tbody = document.getElementById('queue-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-dim);">No records match your filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(m => {
+        const pct = Math.round(m.score * 100);
+        return `
+          <tr>
+            <td>
+              <span class="badge ${m.status === 'quarantined' ? 'badge-danger' : (m.status === 'review' ? 'badge-warning' : 'badge-success')}">
+                ${m.status.toUpperCase()}
+              </span>
+              ${m.reviewed_verdict ? `<div style="font-size: 0.68rem; color: var(--color-purple); margin-top: 3px;">Audited: ${m.reviewed_verdict}</div>` : ''}
+            </td>
+            <td>
+              <div class="score-cell">
+                <strong class="${pct >= 55 ? 'text-danger' : (pct >= 35 ? 'text-warning' : 'text-success')}">${pct}%</strong>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill ${pct >= 55 ? 'fill-danger' : (pct >= 35 ? 'fill-warning' : 'fill-success')}" style="width: ${pct}%;"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="email-meta-cell">
+                <span class="email-sender">${m.sender}</span>
+                <strong class="email-subject">${m.subject}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="reason-cell">
+                ${(m.reason || '').split(';').map(r => `<span class="reason-pill">${r.trim()}</span>`).join('')}
+              </div>
+            </td>
+            <td><span class="time-cell">${m.received_at || 'Recently'}</span></td>
+            <td style="text-align: right;">
+              <div class="table-actions">
+                <button type="button" class="btn btn-sm btn-outline" onclick="openInspectModal(${m.id})">Inspect</button>
+                <button type="button" class="btn-icon-danger" onclick="deleteMessageRecord(${m.id})" title="Delete">&times;</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function deleteMessageRecord(id) {
+      if (confirm(`Delete message #${id}?`)) {
+        messages = messages.filter(m => m.id !== id);
+        saveDatabase(messages);
+        showToast(`Message #${id} removed from queue.`);
+      }
+    }
+
+    function openInspectModal(id) {
+      const msg = messages.find(m => m.id === id);
+      if (!msg) return;
+
+      currentActiveModalId = id;
+      document.getElementById('modal-heading').textContent = `Message #${id} Security Audit`;
+      document.getElementById('modal-sender').textContent = msg.sender;
+      document.getElementById('modal-time').textContent = msg.received_at || 'Just now';
+      document.getElementById('modal-score').textContent = `${Math.round(msg.score * 100)}% (${msg.verdict.toUpperCase()})`;
+      document.getElementById('modal-status').textContent = msg.status.toUpperCase();
+      document.getElementById('modal-subject').textContent = msg.subject;
+      document.getElementById('modal-body').textContent = msg.body;
+
+      document.getElementById('modal-reasons').innerHTML = (msg.reason || '').split(';').map(r => `<span class="reason-pill">${r.trim()}</span>`).join('');
+
+      document.getElementById('inspection-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeInspectModal() {
+      document.getElementById('inspection-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      currentActiveModalId = null;
+    }
+
+    function applyAnalystDecision(decision) {
+      if (!currentActiveModalId) return;
+      const msg = messages.find(m => m.id === currentActiveModalId);
+      if (msg) {
+        msg.reviewed_verdict = decision;
+        msg.status = decision === 'phishing' ? 'quarantined' : 'delivered';
+        saveDatabase(messages);
+        showToast(`Message #${currentActiveModalId} reviewed and marked as ${decision.toUpperCase()}.`);
+        closeInspectModal();
+      }
+    }
+
+    function renderEvaluation() {
+      const labeled = messages.filter(m => m.label !== undefined && m.label !== null);
+      const tp = labeled.filter(m => m.label === 1 && m.verdict === 'phishing').length;
+      const tn = labeled.filter(m => m.label === 0 && m.verdict === 'legitimate').length;
+      const fp = labeled.filter(m => m.label === 0 && m.verdict === 'phishing').length;
+      const fn = labeled.filter(m => m.label === 1 && m.verdict === 'legitimate').length;
+      const total = labeled.length;
+
+      const accuracy = total ? Math.round((tp + tn) / total * 1000) / 10 : 0;
+      const precision = (tp + fp) ? Math.round(tp / (tp + fp) * 1000) / 10 : 0;
+      const recall = (tp + fn) ? Math.round(tp / (tp + fn) * 1000) / 10 : 0;
+      const f1 = (precision + recall) ? Math.round(2 * (precision * recall) / (precision + recall) * 10) / 10 : 0;
+
+      document.getElementById('eval-accuracy').textContent = `${accuracy}%`;
+      document.getElementById('eval-precision').textContent = `${precision}%`;
+      document.getElementById('eval-recall').textContent = `${recall}%`;
+      document.getElementById('eval-f1').textContent = `${f1}%`;
+
+      document.getElementById('cm-tp').textContent = tp;
+      document.getElementById('cm-tn').textContent = tn;
+      document.getElementById('cm-fp').textContent = fp;
+      document.getElementById('cm-fn').textContent = fn;
+    }
+
+    function downloadSampleDatasetCSV() {
+      const csv = `sender,subject,body,label\nsecurity@paypal-auth.top,Action Required: Account Suspended,Sign in immediately at http://paypal-auth.top/login to prevent suspension,1\nsupport@company.com,Q4 Financial Update,The Q4 report is available on the intranet at https://company.internal/q4,0\npayroll@paycheck-service.info,Urgent: Bank Details Update,Please verify your account and password at http://bit.ly/pay-verify today,1\nteammate@company.com,Lunch meeting,Are we still grabbing tacos today?,0\n`;
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'phishguard_benchmark_dataset.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function handleCSVUpload(input) {
+      if (!input.files || !input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        let imported = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          if (parts.length >= 3) {
+            const sender = parts[0]?.trim() || "dataset@example.com";
+            const subject = parts[1]?.trim() || "Imported Email";
+            const body = parts[2]?.trim() || "";
+            const rawLabel = parts[3]?.trim() || "0";
+            const label = (rawLabel === '1' || rawLabel.toLowerCase() === 'true' || rawLabel.toLowerCase() === 'phish') ? 1 : 0;
+
+            const res = analyzeMessage(sender, subject, body);
+            messages.push({
+              id: messages.length ? Math.max(...messages.map(m => m.id)) + 1 : 1,
+              sender,
+              subject,
+              body,
+              score: res.score,
+              verdict: res.verdict,
+              status: res.status,
+              reason: res.reason,
+              label,
+              reviewed_verdict: null,
+              received_at: new Date().toISOString().substring(0, 10)
+            });
+            imported++;
+          }
+        }
+
+        saveDatabase(messages);
+        showToast(`Successfully imported and benchmarked ${imported} records from CSV.`);
+      };
+      reader.readAsText(input.files[0]);
+    }
+
+    function resetToInitialDemoData() {
+      if (confirm("Reset all records to initial demo database?")) {
+        messages = [...INITIAL_DATA];
+        saveDatabase(messages);
+        showToast("Database restored to default demo records.");
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshAllViews();
+    });
+  </script>
+</body>
+</html>

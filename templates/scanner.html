@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Email Threat Scanner - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="page-container scanner-center-layout">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1 class="page-title">Live Email Threat Scanner</h1>
+      <p class="page-subtitle">Analyze incoming emails, suspicious links, and urgent language cues using heuristic rules.</p>
+    </div>
+    <div class="header-actions">
+      <a href="{{ url_for('main.quarantine_page') }}" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect width="18" height="18" x="3" y="3" rx="2"/>
+          <path d="M7 8h10"/>
+          <path d="M7 12h10"/>
+        </svg>
+        View Quarantine Queue
+      </a>
+    </div>
+  </div>
+
+  <!-- Scanner Card -->
+  <div class="card" id="scanner-card">
+    
+    <!-- 1-Click Scenario Presets -->
+    <div class="preset-section">
+      <div class="preset-label">1-Click Test Scenarios:</div>
+      <div class="preset-buttons">
+        <button type="button" class="btn btn-preset" onclick="loadSample('paypal')">
+          <span class="badge-dot badge-dot-danger"></span> PayPal Phishing
+        </button>
+        <button type="button" class="btn btn-preset" onclick="loadSample('mailbox')">
+          <span class="badge-dot badge-dot-danger"></span> Mailbox Storage Scam
+        </button>
+        <button type="button" class="btn btn-preset" onclick="loadSample('payroll')">
+          <span class="badge-dot badge-dot-warning"></span> Payroll Direct Deposit
+        </button>
+        <button type="button" class="btn btn-preset" onclick="loadSample('bank')">
+          <span class="badge-dot badge-dot-success"></span> Legitimate Bank Alert
+        </button>
+        <button type="button" class="btn btn-preset" onclick="loadSample('lunch')">
+          <span class="badge-dot badge-dot-success"></span> Safe Lunch Invite
+        </button>
+      </div>
+    </div>
+
+    <!-- Scanner Form -->
+    <form action="{{ url_for('main.add_message') }}" method="POST" id="scan-form" class="scanner-form">
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="sender" class="form-label">
+            Sender Address <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="sender" 
+            id="sender" 
+            class="form-control" 
+            placeholder="e.g. billing@paypaI-security.example" 
+            required
+          >
+        </div>
+        <div class="form-group flex-2">
+          <label for="subject" class="form-label">
+            Subject Line <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="subject" 
+            id="subject" 
+            class="form-control" 
+            placeholder="e.g. Urgent: Account suspended - action required" 
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label-row">
+          <label for="body" class="form-label">
+            Message Body / Content / Target URLs <span class="required">*</span>
+          </label>
+          <button type="button" class="btn-text" onclick="clearForm()">Clear Fields</button>
+        </div>
+        <textarea 
+          name="body" 
+          id="body" 
+          rows="6" 
+          class="form-control" 
+          placeholder="Paste email text, URL links (e.g. http://paypal-verify.example/login), or credential requests..." 
+          required
+        ></textarea>
+      </div>
+
+      <!-- Real-time Live Scan Result Box (AJAX Preview) -->
+      <div id="live-scan-result" class="live-scan-card hidden">
+        <div class="live-scan-header">
+          <span class="live-title">Instant Risk Assessment</span>
+          <span id="live-verdict-badge" class="badge"></span>
+        </div>
+        <div class="live-meter-container">
+          <div class="meter-info">
+            <span>Calculated Threat Score</span>
+            <strong id="live-score-text">0%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="live-score-bar" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div class="live-reasons" id="live-reasons-list"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary flex-1" id="btn-quick-scan" onclick="performQuickScan()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Live Preview Check
+        </button>
+        <button type="submit" class="btn btn-primary flex-2" id="btn-submit-scan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          Scan & Quarantine Threat
+        </button>
+      </div>
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}

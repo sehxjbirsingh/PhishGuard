@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Model Evaluation & Accuracy Benchmark - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="evaluation-container">
+
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1 class="page-title">Heuristic Model Evaluation & Confusion Matrix</h1>
+      <p class="page-subtitle">Benchmark the heuristic detection accuracy, precision, and recall against labeled test datasets.</p>
+    </div>
+    <div class="header-actions">
+      <a href="{{ url_for('main.download_sample_csv') }}" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Sample CSV
+      </a>
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Performance Metric Cards -->
+  <section class="stats-grid stats-grid-4">
+    <div class="stat-card border-cyan">
+      <div class="stat-header">
+        <span class="stat-label">Model Accuracy</span>
+        <div class="stat-icon icon-cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value text-cyan">{{ accuracy }}%</div>
+      <div class="stat-subtext">Overall correct predictions ({{ tp + tn }}/{{ total }})</div>
+    </div>
+
+    <div class="stat-card border-emerald">
+      <div class="stat-header">
+        <span class="stat-label">Precision (Phishing)</span>
+        <div class="stat-icon icon-emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value text-success">{{ precision }}%</div>
+      <div class="stat-subtext">TP / (TP + FP) - Low false alarms</div>
+    </div>
+
+    <div class="stat-card border-purple">
+      <div class="stat-header">
+        <span class="stat-label">Recall / Sensitivity</span>
+        <div class="stat-icon icon-purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value text-purple">{{ recall }}%</div>
+      <div class="stat-subtext">TP / (TP + FN) - Real threats caught</div>
+    </div>
+
+    <div class="stat-card border-blue">
+      <div class="stat-header">
+        <span class="stat-label">F1-Score</span>
+        <div class="stat-icon icon-blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 20V10"/>
+            <path d="M12 20V4"/>
+            <path d="M6 20v-6"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value text-blue">{{ f1 }}%</div>
+      <div class="stat-subtext">Harmonic mean of precision & recall</div>
+    </div>
+  </section>
+
+  <!-- Confusion Matrix & CSV Importer Grid -->
+  <div class="eval-grid">
+    
+    <!-- Confusion Matrix Card -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Confusion Matrix Grid</h2>
+        <p class="card-subtitle">Detailed breakdown of predicted verdicts versus verified ground truth labels</p>
+      </div>
+
+      <div class="confusion-matrix-wrapper">
+        <div class="cm-table-container">
+          <table class="confusion-matrix">
+            <thead>
+              <tr>
+                <th class="cm-corner" colspan="2" rowspan="2"></th>
+                <th colspan="2" class="cm-header-group">Actual Ground Truth</th>
+              </tr>
+              <tr>
+                <th class="cm-col-label">Actual Phishing (1)</th>
+                <th class="cm-col-label">Actual Legitimate (0)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th rowspan="2" class="cm-row-group">
+                  <div class="cm-vertical-label">Predicted By Engine</div>
+                </th>
+                <th class="cm-row-label">Predicted Phishing</th>
+                <td class="cm-cell cm-tp">
+                  <div class="cm-cell-title">True Positive (TP)</div>
+                  <div class="cm-cell-number text-success">{{ tp }}</div>
+                  <div class="cm-cell-desc">Correctly Quarantined Phishing</div>
+                </td>
+                <td class="cm-cell cm-fp">
+                  <div class="cm-cell-title">False Positive (FP)</div>
+                  <div class="cm-cell-number text-warning">{{ fp }}</div>
+                  <div class="cm-cell-desc">Safe Email Flagged as Threat</div>
+                </td>
+              </tr>
+              <tr>
+                <th class="cm-row-label">Predicted Legitimate</th>
+                <td class="cm-cell cm-fn">
+                  <div class="cm-cell-title">False Negative (FN)</div>
+                  <div class="cm-cell-number text-danger">{{ fn }}</div>
+                  <div class="cm-cell-desc">Phishing Threat Missed / Delivered</div>
+                </td>
+                <td class="cm-cell cm-tn">
+                  <div class="cm-cell-title">True Negative (TN)</div>
+                  <div class="cm-cell-number text-success">{{ tn }}</div>
+                  <div class="cm-cell-desc">Correctly Delivered Safe Email</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cm-legend">
+          <div class="legend-item"><span class="legend-color bg-success"></span> True Positive / Negative: Correct classification</div>
+          <div class="legend-item"><span class="legend-color bg-warning"></span> False Positive: False alarm (safe email quarantined)</div>
+          <div class="legend-item"><span class="legend-color bg-danger"></span> False Negative: Phishing missed (high severity)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CSV Dataset Importer Card -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Import Labeled Dataset (CSV)</h2>
+        <p class="card-subtitle">Upload CSV files containing benchmark emails or URLs to evaluate detector performance.</p>
+      </div>
+
+      <form action="{{ url_for('main.import_csv') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+        <div class="upload-dropzone" id="drop-area" onclick="document.getElementById('csv-file-input').click()">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="dropzone-text">
+            <strong>Click to upload</strong> or drag and drop CSV file
+          </div>
+          <span class="dropzone-hint">Supports CSV with columns: <code>sender</code>, <code>subject</code>, <code>body</code> (or <code>url</code>), <code>label</code></span>
+          <input 
+            type="file" 
+            name="file" 
+            id="csv-file-input" 
+            accept=".csv" 
+            class="hidden-input" 
+            onchange="handleFileSelect(this)" 
+            required
+          >
+          <div id="file-name-display" class="selected-file-badge hidden"></div>
+        </div>
+
+        <div class="form-actions mt-4">
+          <button type="submit" class="btn btn-primary btn-block">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload & Benchmark Dataset
+          </button>
+        </div>
+      </form>
+
+      <div class="csv-format-guide">
+        <h4>Expected CSV Schema:</h4>
+        <div class="schema-table-wrapper">
+          <table class="schema-table">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>sender</code></td>
+                <td>String</td>
+                <td>Email address of the sender (optional, default provided)</td>
+              </tr>
+              <tr>
+                <td><code>subject</code></td>
+                <td>String</td>
+                <td>Subject line (optional)</td>
+              </tr>
+              <tr>
+                <td><code>body</code> or <code>url</code></td>
+                <td>String</td>
+                <td><strong>Required.</strong> Email text or target URL</td>
+              </tr>
+              <tr>
+                <td><code>label</code></td>
+                <td>0 or 1</td>
+                <td><code>1</code> for Phishing, <code>0</code> for Legitimate</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Labeled Dataset Rows Table -->
+  <section class="card mt-6">
+    <div class="card-header card-header-split">
+      <div>
+        <h2 class="card-title">Labeled Dataset Records ({{ rows|length }})</h2>
+        <p class="card-subtitle">List of benchmark test cases evaluated against ground truth labels</p>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 80px;">ID</th>
+            <th style="width: 130px;">Ground Truth</th>
+            <th style="width: 140px;">Engine Verdict</th>
+            <th style="width: 100px;">Match</th>
+            <th style="width: 120px;">Risk Score</th>
+            <th>Sender & Subject</th>
+            <th style="width: 130px;">Date Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if rows %}
+            {% for r in rows %}
+              {% set is_match = (r.label == 1 and r.verdict == 'phishing') or (r.label == 0 and r.verdict == 'legitimate') %}
+              <tr class="{% if is_match %}row-match{% else %}row-mismatch{% endif %}">
+                <td><span class="font-mono text-muted">#{{ r.id }}</span></td>
+                <td>
+                  {% if r.label == 1 %}
+                    <span class="badge badge-danger">1 (Phishing)</span>
+                  {% else %}
+                    <span class="badge badge-success">0 (Legitimate)</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.verdict == 'phishing' %}
+                    <span class="badge badge-danger">Phishing</span>
+                  {% else %}
+                    <span class="badge badge-success">Legitimate</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if is_match %}
+                    <span class="match-badge match-success" title="Correctly Classified">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Correct
+                    </span>
+                  {% else %}
+                    <span class="match-badge match-failure" title="Misclassified">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                      Mismatch
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% set score_pct = (r.score * 100)|round|int %}
+                  <div class="score-cell">
+                    <strong>{{ score_pct }}%</strong>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill {% if score_pct >= 55 %}fill-danger{% elif score_pct >= 35 %}fill-warning{% else %}fill-success{% endif %}" style="width: {{ score_pct }}%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="email-meta-cell">
+                    <span class="email-sender">{{ r.sender }}</span>
+                    <strong class="email-subject">{{ r.subject }}</strong>
+                  </div>
+                </td>
+                <td><span class="time-cell">{{ r.received_at[:10] }}</span></td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="empty-state">
+                <h4>No Labeled Records Found</h4>
+                <p>Upload a CSV file or seed demo records to evaluate model accuracy.</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
