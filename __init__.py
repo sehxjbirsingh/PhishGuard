@@ -30,7 +30,4 @@ def create_app(config=None):
     init_app(app)
     app.register_blueprint(bp)
     
-    with app.app_context():
-        seed_demo()
-        
     return app

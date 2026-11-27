@@ -61,9 +61,9 @@ def get_email_body(msg):
         pass
     return body.strip()
 
-def fetch_live_gmail(email_address, app_password, max_emails=5):
+def fetch_live_gmail(email_address, app_password, max_emails=50):
     clean_password = (app_password or '').replace(' ', '')
-    mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=12)
+    mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=30)
     mail.login(email_address, clean_password)
     mail.select("INBOX")
     
@@ -77,24 +77,27 @@ def fetch_live_gmail(email_address, app_password, max_emails=5):
     results = []
     
     for eid in reversed(recent_ids):
-        res, data = mail.fetch(eid, "(RFC822)")
-        if res != "OK" or not data:
+        try:
+            res, data = mail.fetch(eid, "(RFC822)")
+            if res != "OK" or not data:
+                continue
+            for response_part in data:
+                if isinstance(response_part, tuple):
+                    msg = email.message_from_bytes(response_part[1])
+                    sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
+                    subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
+                    body = get_email_body(msg)
+                    if not body:
+                        body = subject or "No body content"
+                    results.append({
+                        "sender": sender,
+                        "subject": subject,
+                        "body": body,
+                        "date": msg.get("Date", "")
+                    })
+                    break
+        except Exception:
             continue
-        for response_part in data:
-            if isinstance(response_part, tuple):
-                msg = email.message_from_bytes(response_part[1])
-                sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
-                subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
-                body = get_email_body(msg)
-                if not body:
-                    body = subject or "No body content"
-                results.append({
-                    "sender": sender,
-                    "subject": subject,
-                    "body": body,
-                    "date": msg.get("Date", "")
-                })
-                break
     mail.logout()
     return results
 
@@ -137,7 +140,7 @@ def login():
 
         # Automatically fetch and screen live incoming emails from user inbox
         try:
-            live_messages = fetch_live_gmail(gmail_address, clean_password, max_emails=10)
+            live_messages = fetch_live_gmail(gmail_address, clean_password, max_emails=50)
             if live_messages:
                 db = get_db()
                 count = 0
@@ -208,7 +211,7 @@ def sync_gmail():
         return redirect(url_for('main.login'))
 
     try:
-        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=10)
+        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=50)
     except Exception as exc:
         flash(f"Failed to fetch live emails from Gmail: {exc}", "error")
         return redirect(url_for('main.quarantine_page'))
@@ -246,7 +249,7 @@ def api_auto_sync():
         return jsonify({"status": "idle", "message": "No Gmail account session"}), 200
 
     try:
-        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=5)
+        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=50)
     except Exception as exc:
         return jsonify({"status": "error", "message": str(exc)}), 200
 
