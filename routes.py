@@ -63,41 +63,92 @@ def get_email_body(msg):
 
 def fetch_live_gmail(email_address, app_password, max_emails=50):
     clean_password = (app_password or '').replace(' ', '')
-    mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=30)
+    mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=35)
     mail.login(email_address, clean_password)
-    mail.select("INBOX")
     
+    # Try selecting [Gmail]/All Mail first to access the complete 600+ email archive
+    selected_folder = "INBOX"
+    for folder in ['"[Gmail]/All Mail"', '[Gmail]/All Mail', 'INBOX']:
+        try:
+            res_sel, _ = mail.select(folder, readonly=True)
+            if res_sel == "OK":
+                selected_folder = folder
+                break
+        except Exception:
+            continue
+
     status, messages = mail.search(None, "ALL")
+    if (status != "OK" or not messages or not messages[0]) and selected_folder != "INBOX":
+        mail.select("INBOX", readonly=True)
+        status, messages = mail.search(None, "ALL")
+
     if status != "OK" or not messages or not messages[0]:
         mail.logout()
         return []
         
     email_ids = messages[0].split()
-    recent_ids = email_ids[-max_emails:]
+    try:
+        sorted_ids = sorted(email_ids, key=lambda x: int(x))
+    except Exception:
+        sorted_ids = email_ids
+
+    recent_ids = sorted_ids[-max_emails:]
     results = []
-    
-    for eid in reversed(recent_ids):
+
+    # Fast batch range fetch for high-speed retrieval of 50 emails
+    if recent_ids:
+        first_id = recent_ids[0].decode() if isinstance(recent_ids[0], bytes) else str(recent_ids[0])
+        last_id = recent_ids[-1].decode() if isinstance(recent_ids[-1], bytes) else str(recent_ids[-1])
+        id_range = f"{first_id}:{last_id}"
+        
         try:
-            res, data = mail.fetch(eid, "(RFC822)")
-            if res != "OK" or not data:
-                continue
-            for response_part in data:
-                if isinstance(response_part, tuple):
-                    msg = email.message_from_bytes(response_part[1])
-                    sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
-                    subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
-                    body = get_email_body(msg)
-                    if not body:
-                        body = subject or "No body content"
-                    results.append({
-                        "sender": sender,
-                        "subject": subject,
-                        "body": body,
-                        "date": msg.get("Date", "")
-                    })
-                    break
+            res, data = mail.fetch(id_range, "(RFC822)")
+            if res == "OK" and data:
+                for item in data:
+                    if isinstance(item, tuple) and len(item) == 2:
+                        try:
+                            msg = email.message_from_bytes(item[1])
+                            sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
+                            subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
+                            body = get_email_body(msg)
+                            if not body:
+                                body = subject or "No body content"
+                            results.append({
+                                "sender": sender,
+                                "subject": subject,
+                                "body": body,
+                                "date": msg.get("Date", "")
+                            })
+                        except Exception:
+                            continue
         except Exception:
-            continue
+            results = []
+
+    # Fallback to individual fetch if batch fetch returned empty
+    if not results:
+        for eid in reversed(recent_ids):
+            try:
+                res, data = mail.fetch(eid, "(RFC822)")
+                if res != "OK" or not data:
+                    continue
+                for response_part in data:
+                    if isinstance(response_part, tuple):
+                        msg = email.message_from_bytes(response_part[1])
+                        sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
+                        subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
+                        body = get_email_body(msg)
+                        if not body:
+                            body = subject or "No body content"
+                        results.append({
+                            "sender": sender,
+                            "subject": subject,
+                            "body": body,
+                            "date": msg.get("Date", "")
+                        })
+                        break
+            except Exception:
+                continue
+
     mail.logout()
     return results
 
@@ -331,7 +382,34 @@ def scanner_page():
 # 3. Dedicated Quarantine & Threat Queue Page
 @bp.get('/quarantine')
 def quarantine_page():
+    gmail_address = session.get('gmail')
+    gmail_password = session.get('gmail_password')
     data = get_stats()
+
+    # If fewer than 50 emails in DB, auto-pull the top 50 most recent live emails from Gmail!
+    if data['stats']['total'] < 50 and gmail_address and gmail_password:
+        try:
+            live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=50)
+            if live_messages:
+                db = get_db()
+                for item in live_messages:
+                    existing = db.execute(
+                        'SELECT id FROM messages WHERE sender = ? AND subject = ? AND body = ?',
+                        (item['sender'], item['subject'], item['body'])
+                    ).fetchone()
+                    if existing:
+                        continue
+                    a = analyze(item['sender'], item['subject'], item['body'])
+                    status = 'quarantined' if a['verdict'] == 'phishing' else ('review' if a['score'] >= 0.35 else 'delivered')
+                    db.execute(
+                        'INSERT INTO messages (sender, subject, body, score, verdict, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (item['sender'], item['subject'], item['body'], a['score'], a['verdict'], a['reason'], status)
+                    )
+                db.commit()
+                data = get_stats()
+        except Exception:
+            pass
+
     return render_template('quarantine.html', messages=data["rows"], stats=data["stats"])
 
 # Form submission for scanning
