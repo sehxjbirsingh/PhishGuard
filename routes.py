@@ -1,8 +1,12 @@
 import csv
 import io
+import re
+import imaplib
+import email
+from email.header import decode_header
 from flask import (
     Blueprint, render_template, request, redirect, url_for, 
-    flash, jsonify, Response
+    flash, jsonify, Response, session
 )
 
 try:
@@ -13,6 +17,203 @@ except ImportError:
     from detector import analyze
 
 bp = Blueprint('main', __name__)
+
+def decode_mime_words(s):
+    if not s:
+        return ""
+    try:
+        decoded_fragments = decode_header(s)
+        res = []
+        for frag, encoding in decoded_fragments:
+            if isinstance(frag, bytes):
+                try:
+                    res.append(frag.decode(encoding or 'utf-8', errors='ignore'))
+                except Exception:
+                    res.append(frag.decode('latin1', errors='ignore'))
+            else:
+                res.append(str(frag))
+        return "".join(res)
+    except Exception:
+        return str(s)
+
+def get_email_body(msg):
+    body = ""
+    try:
+        if msg.is_multipart():
+            for part in msg.walk():
+                ctype = part.get_content_type()
+                cdisp = str(part.get("Content-Disposition", ""))
+                if ctype == "text/plain" and "attachment" not in cdisp:
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        body += payload.decode('utf-8', errors='ignore')
+                elif ctype == "text/html" and not body and "attachment" not in cdisp:
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        clean_text = re.sub(r'<[^>]+>', ' ', payload.decode('utf-8', errors='ignore'))
+                        body = clean_text
+        else:
+            payload = msg.get_payload(decode=True)
+            if payload:
+                body = payload.decode('utf-8', errors='ignore')
+    except Exception:
+        pass
+    return body.strip()
+
+def fetch_live_gmail(email_address, app_password, max_emails=5):
+    clean_password = (app_password or '').replace(' ', '')
+    mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=12)
+    mail.login(email_address, clean_password)
+    mail.select("INBOX")
+    
+    status, messages = mail.search(None, "ALL")
+    if status != "OK" or not messages or not messages[0]:
+        mail.logout()
+        return []
+        
+    email_ids = messages[0].split()
+    recent_ids = email_ids[-max_emails:]
+    results = []
+    
+    for eid in reversed(recent_ids):
+        res, data = mail.fetch(eid, "(RFC822)")
+        if res != "OK" or not data:
+            continue
+        for response_part in data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                sender = decode_mime_words(msg.get("From", "unknown@gmail.com"))
+                subject = decode_mime_words(msg.get("Subject", "Incoming Message"))
+                body = get_email_body(msg)
+                if not body:
+                    body = subject or "No body content"
+                results.append({
+                    "sender": sender,
+                    "subject": subject,
+                    "body": body,
+                    "date": msg.get("Date", "")
+                })
+                break
+    mail.logout()
+    return results
+
+# Before request guard: require login for application views
+@bp.before_request
+def require_login():
+    public_endpoints = ('main.login', 'static', 'main.api_analyze', 'main.api_messages')
+    if request.endpoint and not request.endpoint.startswith('static'):
+        if request.endpoint not in public_endpoints and not session.get('user'):
+            return redirect(url_for('main.login'))
+
+@bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip() or 'Security_Analyst'
+        password = request.form.get('password', '').strip()
+        gmail_address = request.form.get('gmail_address', '').strip()
+        gmail_app_password = request.form.get('gmail_app_password', '').strip()
+
+        session['user'] = username
+        if gmail_address:
+            session['gmail'] = gmail_address
+            session['gmail_password'] = gmail_app_password
+            flash(f'Signed in as {username}. Gmail connected: {gmail_address}', 'success')
+        else:
+            flash(f'Signed in successfully as {username}.', 'success')
+        return redirect(url_for('main.dashboard'))
+
+    if session.get('user'):
+        return redirect(url_for('main.dashboard'))
+    return render_template('login.html')
+
+@bp.get('/logout')
+def logout():
+    session.clear()
+    flash('Signed out successfully.', 'info')
+    return redirect(url_for('main.login'))
+
+@bp.post('/connect-gmail')
+def connect_gmail():
+    gmail_address = request.form.get('gmail_address', '').strip()
+    gmail_app_password = request.form.get('gmail_app_password', '').strip()
+
+    if not gmail_address:
+        flash('Please provide a valid Gmail address.', 'error')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+    session['gmail'] = gmail_address
+    session['gmail_password'] = gmail_app_password
+    flash(f'Gmail inbox connected: {gmail_address}. Ready to sync live messages.', 'success')
+    return redirect(request.referrer or url_for('main.dashboard'))
+
+@bp.post('/sync-gmail')
+def sync_gmail():
+    gmail_address = session.get('gmail')
+    gmail_password = session.get('gmail_password')
+    force_demo = request.form.get('demo') == '1'
+
+    live_messages = []
+    sync_mode = "Live IMAP"
+
+    # Try connecting to live Gmail via IMAP if credentials provided
+    if gmail_address and gmail_password and not force_demo:
+        try:
+            live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=5)
+        except Exception as exc:
+            err_msg = str(exc)
+            if "AUTHENTICATIONFAILED" in err_msg or "Invalid credentials" in err_msg:
+                flash("Gmail authentication failed: Please use a 16-character Google App Password (myaccount.google.com/apppasswords). Falling back to simulated live incoming stream.", "warning")
+            else:
+                flash(f"Live Gmail connection issue ({err_msg}). Falling back to simulated live incoming feed.", "warning")
+            live_messages = []
+
+    # If no IMAP credentials or connection failed, provide realistic live stream simulation
+    if not live_messages:
+        sync_mode = "Live Feed Simulator"
+        live_messages = [
+            {
+                "sender": f"security-alert@{session.get('gmail', 'gmail.com').split('@')[0]}-auth.xyz",
+                "subject": "Action required: Suspicious sign-in detected on your Gmail account",
+                "body": "We detected an unauthorized sign-in from an unknown device. Verify your credentials immediately at http://gmail-auth-verify.top/login to avoid suspension. Enter your password.",
+                "date": "Just now"
+            },
+            {
+                "sender": "no-reply@accounts.google.example",
+                "subject": "Security notice: 2-Step Verification turned on",
+                "body": "2-Step Verification is active for your Google Account. If you made this change, no action is needed. Review activity at https://myaccount.google.example/security.",
+                "date": "Just now"
+            },
+            {
+                "sender": "it-support@internal-team.example",
+                "subject": "Urgent: Direct deposit payroll mismatch notification",
+                "body": "Your bank details require verification before salary release today. Please submit your account details and password at http://bit.ly/pay-verify.",
+                "date": "Just now"
+            }
+        ]
+
+    db = get_db()
+    count = 0
+    threats_found = 0
+
+    for item in live_messages:
+        s_sender = item['sender']
+        s_subject = item['subject']
+        s_body = item['body']
+        
+        a = analyze(s_sender, s_subject, s_body)
+        status = 'quarantined' if a['verdict'] == 'phishing' else ('review' if a['score'] >= 0.35 else 'delivered')
+        if a['verdict'] == 'phishing':
+            threats_found += 1
+
+        db.execute(
+            'INSERT INTO messages (sender, subject, body, score, verdict, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (s_sender, s_subject, s_body, a['score'], a['verdict'], a['reason'], status)
+        )
+        count += 1
+
+    db.commit()
+    flash(f"Live Sync Complete ({sync_mode}): Screened {count} incoming emails. Intercepted {threats_found} threats into quarantine.", "success")
+    return redirect(url_for('main.quarantine_page'))
 
 def get_stats():
     db = get_db()
@@ -41,7 +242,6 @@ def get_stats():
 @bp.get('/')
 def dashboard():
     data = get_stats()
-    # Recent high-risk or newest 5 alerts for the executive view
     recent_alerts = data["rows"][:5]
     return render_template('dashboard.html', stats=data["stats"], recent_alerts=recent_alerts)
 
@@ -65,7 +265,6 @@ def add_message():
     sender = data.get('sender', '').strip()
     subject = data.get('subject', '').strip()
     body = data.get('body', '').strip()
-    redirect_target = data.get('redirect_to', 'main.quarantine_page')
 
     if not sender or not subject or not body:
         msg = 'Please fill in sender, subject, and message body.'
@@ -103,8 +302,6 @@ def add_message():
 
     category = 'error' if a['verdict'] == 'phishing' else ('warning' if status == 'review' else 'success')
     flash(flash_msg, category)
-    
-    # If the user clicked from scanner page, redirect to quarantine page to see the new entry
     return redirect(url_for('main.quarantine_page'))
 
 @bp.post('/api/analyze')
@@ -262,8 +459,3 @@ def import_csv():
         flash(f'Could not import CSV: {exc}', 'error')
         
     return redirect(url_for('main.evaluation'))
-
-# 5. Dedicated API Docs / Explorer Page
-@bp.get('/api-docs')
-def api_docs():
-    return render_template('api_docs.html')

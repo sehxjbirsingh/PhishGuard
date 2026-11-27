@@ -31,6 +31,68 @@
     </div>
   </div>
 
+  <!-- Live Gmail Stream Monitor Banner -->
+  <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(9, 21, 15, 0.95), rgba(13, 30, 22, 0.95)); border: 1px solid {% if session.get('gmail') %}var(--cyber-green){% else %}var(--border-card){% endif %}; box-shadow: 0 0 20px {% if session.get('gmail') %}rgba(0, 255, 157, 0.15){% else %}transparent{% endif %};">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 255, 157, 0.1); border: 1px solid rgba(0, 255, 157, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+          {% if session.get('gmail') %}⚡{% else %}✉️{% endif %}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff;">
+              {% if session.get('gmail') %}
+                Live Gmail Stream: <span class="text-cyber font-mono">{{ session.get('gmail') }}</span>
+              {% else %}
+                Live Gmail Account Not Linked
+              {% endif %}
+            </h3>
+            {% if session.get('gmail') %}
+              <span class="badge badge-success" style="font-size: 0.7rem; padding: 2px 8px;">CONNECTED &amp; ACTIVE</span>
+            {% else %}
+              <span class="badge badge-warning" style="font-size: 0.7rem; padding: 2px 8px;">SIMULATION READY</span>
+            {% endif %}
+          </div>
+          <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+            {% if session.get('gmail') %}
+              Incoming emails from your inbox are screened in real-time by the PhishGuard heuristic threat engine.
+            {% else %}
+              Connect your Google Workspace or personal Gmail to screen live incoming emails directly into the quarantine queue.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        {% if session.get('gmail') %}
+          <form action="{{ url_for('main.sync_gmail') }}" method="POST" style="margin: 0;">
+            <button type="submit" class="btn btn-primary" style="font-weight: 700;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              Sync Live Inbox Now
+            </button>
+          </form>
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('gmail-modal').classList.remove('hidden')">
+            Settings
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('gmail-modal').classList.remove('hidden')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="20" height="16" x="2" y="4" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            Connect Gmail Account
+          </button>
+          <form action="{{ url_for('main.sync_gmail') }}" method="POST" style="margin: 0;">
+            <button type="submit" class="btn btn-outline" title="Run simulated live email ingestion feed">
+              Simulate Live Inbound Feed
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
   <!-- Key Metrics Row -->
   <section class="stats-grid">
     <div class="stat-card">

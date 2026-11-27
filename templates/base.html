@@ -64,18 +64,90 @@
           </svg>
           Model Evaluation
         </a>
-
-
       </nav>
 
+      <!-- User & Gmail Actions in Navbar -->
       <div class="nav-actions">
-        <div class="status-indicator" title="Heuristic & Rule Engine Active">
-          <span class="status-dot pulse"></span>
-          <span class="status-text">Shield Online</span>
-        </div>
+        {% if session.get('gmail') %}
+          <form action="{{ url_for('main.sync_gmail') }}" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-outline btn-sm" title="Fetch and screen latest live emails from {{ session.get('gmail') }}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              Sync Live Inbox
+            </button>
+          </form>
+          <div class="status-indicator" style="cursor: pointer;" onclick="document.getElementById('gmail-modal').classList.remove('hidden')" title="Click to change Gmail account">
+            <span class="status-dot pulse"></span>
+            <span class="status-text font-mono" style="font-size: 0.76rem;">{{ session.get('gmail') }}</span>
+          </div>
+        {% else %}
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('gmail-modal').classList.remove('hidden')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="20" height="16" x="2" y="4" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            + Connect Gmail
+          </button>
+        {% endif %}
+
+        {% if session.get('user') %}
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">👤 {{ session.get('user') }}</span>
+            <a href="{{ url_for('main.logout') }}" class="btn btn-ghost btn-sm" title="Sign out">
+              Logout
+            </a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </header>
+
+  <!-- Connect Gmail Modal -->
+  <div class="modal-backdrop hidden" id="gmail-modal" onclick="if(event.target.id==='gmail-modal') this.classList.add('hidden')">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          Connect Gmail for Live Scanning
+        </h3>
+        <button type="button" class="modal-close" onclick="document.getElementById('gmail-modal').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Enter your Gmail address and 16-character Google App Password to pull incoming messages directly into PhishGuard.
+        </p>
+        <form action="{{ url_for('main.connect_gmail') }}" method="POST" class="scanner-form">
+          <div class="form-group">
+            <label class="form-label">Gmail Address <span class="required">*</span></label>
+            <input type="email" name="gmail_address" class="form-control" value="{{ session.get('gmail', '') }}" placeholder="yourname@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Google App Password <span class="required">*</span></label>
+            <input type="password" name="gmail_app_password" class="form-control" placeholder="16-character App Password" required>
+            <span style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 4px;">
+              Generated from: Google Account ➔ Security ➔ 2-Step Verification ➔ App Passwords.
+            </span>
+          </div>
+          <div class="form-actions mt-2">
+            <button type="submit" class="btn btn-primary flex-1">Save & Connect Inbox</button>
+          </div>
+        </form>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 0.5rem;">
+          <form action="{{ url_for('main.sync_gmail') }}" method="POST">
+            <input type="hidden" name="demo" value="1">
+            <button type="submit" class="btn btn-secondary btn-block btn-sm">
+              ⚡ Test Simulated Live Incoming Stream (No password needed)
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Flash Messages Banner -->
   <div class="flash-wrapper">
@@ -126,8 +198,8 @@
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-left">
-        <span class="footer-brand">PhishGuard Autonomous Defense System</span>
-        <span class="footer-desc">Next-generation multi-vector phishing heuristic & quarantine gateway.</span>
+        <span class="footer-brand">PhishGuard Cyber Defense Gateway</span>
+        <span class="footer-desc">Autonomous multi-vector heuristic screening & live Gmail threat quarantine.</span>
       </div>
       <div class="footer-right">
         <form action="{{ url_for('main.reset_demo') }}" method="POST" class="inline-form" onsubmit="return confirm('Reset all message records to initial demo dataset?');">
