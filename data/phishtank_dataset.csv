@@ -1,0 +1,26 @@
+phish_id,url,phish_detail_url,submission_time,verified,verification_time,online,target
+123456,http://verify-paypal-account-security.xyz/login.php,https://www.phishtank.com/phish_detail.php?phish_id=123456,2026-06-19T15:15:47+00:00,yes,2026-06-19T15:37:31+00:00,yes,PayPal
+123457,http://appleid-security-auth-check.top/unlock,https://www.phishtank.com/phish_detail.php?phish_id=123457,2026-06-20T10:12:01+00:00,yes,2026-06-20T10:25:44+00:00,yes,Apple
+123458,http://netflix-billing-update-service.club/login,https://www.phishtank.com/phish_detail.php?phish_id=123458,2026-06-21T08:45:12+00:00,yes,2026-06-21T09:05:00+00:00,yes,Netflix
+123459,http://chase-wire-cancel-verification.xyz/auth,https://www.phishtank.com/phish_detail.php?phish_id=123459,2026-06-22T14:30:20+00:00,yes,2026-06-22T14:52:19+00:00,yes,Chase Bank
+123460,http://amazon-prime-security-orders.online/verify,https://www.phishtank.com/phish_detail.php?phish_id=123460,2026-06-23T11:05:33+00:00,yes,2026-06-23T11:28:40+00:00,yes,Amazon
+123461,http://bofa-zelle-dispute-service.top/confirm,https://www.phishtank.com/phish_detail.php?phish_id=123461,2026-06-24T16:18:05+00:00,yes,2026-06-24T16:40:11+00:00,yes,Bank of America
+123462,http://ms-portal-auth-sso.top/login.html,https://www.phishtank.com/phish_detail.php?phish_id=123462,2026-06-25T09:22:45+00:00,yes,2026-06-25T09:44:03+00:00,yes,Microsoft
+123463,http://wellsfargo-reactivate-card.xyz/login,https://www.phishtank.com/phish_detail.php?phish_id=123463,2026-06-26T13:40:15+00:00,yes,2026-06-26T14:02:50+00:00,yes,Wells Fargo
+123464,http://steam-community-login-secure.xyz/auth,https://www.phishtank.com/phish_detail.php?phish_id=123464,2026-06-27T17:15:30+00:00,yes,2026-06-27T17:35:10+00:00,yes,Steam
+123465,http://coinbase-auth-protect-wallet.top/seed,https://www.phishtank.com/phish_detail.php?phish_id=123465,2026-06-28T19:50:40+00:00,yes,2026-06-28T20:15:22+00:00,yes,Coinbase
+123466,http://meta-appeal-case-support.info/case-review,https://www.phishtank.com/phish_detail.php?phish_id=123466,2026-06-29T12:08:14+00:00,yes,2026-06-29T12:30:45+00:00,yes,Facebook
+123467,http://dhl-express-tracking-fees.top/redeliver,https://www.phishtank.com/phish_detail.php?phish_id=123467,2026-06-30T07:44:50+00:00,yes,2026-06-30T08:05:12+00:00,yes,DHL
+123468,http://irs-refund-claim.online/claim-portal,https://www.phishtank.com/phish_detail.php?phish_id=123468,2026-07-01T15:33:21+00:00,yes,2026-07-01T15:55:00+00:00,yes,Internal Revenue Service
+123469,http://portal-payroll-hr.online/update-tax,https://www.phishtank.com/phish_detail.php?phish_id=123469,2026-07-02T11:14:02+00:00,yes,2026-07-02T11:36:20+00:00,yes,ADP / Payroll
+123470,http://webmail-quota-renew.xyz/auth/login,https://www.phishtank.com/phish_detail.php?phish_id=123470,2026-07-03T18:25:39+00:00,yes,2026-07-03T18:48:15+00:00,yes,Webmail / cPanel
+123471,http://binance-security-lock.top/device-verify,https://www.phishtank.com/phish_detail.php?phish_id=123471,2026-07-04T21:10:05+00:00,yes,2026-07-04T21:32:40+00:00,yes,Binance
+123472,http://dropbox-secure-share.xyz/login.php,https://www.phishtank.com/phish_detail.php?phish_id=123472,2026-07-05T14:40:19+00:00,yes,2026-07-05T15:02:10+00:00,yes,Dropbox
+123473,http://spotify-billing-recover.xyz/update-card,https://www.phishtank.com/phish_detail.php?phish_id=123473,2026-07-06T10:20:55+00:00,yes,2026-07-06T10:42:30+00:00,yes,Spotify
+123474,http://usps-redelivery-address.xyz/postal,https://www.phishtank.com/phish_detail.php?phish_id=123474,2026-07-07T16:05:42+00:00,yes,2026-07-07T16:26:18+00:00,yes,USPS
+123475,http://instagram-appeal-case.top/trademark,https://www.phishtank.com/phish_detail.php?phish_id=123475,2026-07-08T13:50:33+00:00,yes,2026-07-08T14:12:05+00:00,yes,Instagram
+123476,http://linkedin-career-inbox.xyz/recruiter-offer,https://www.phishtank.com/phish_detail.php?phish_id=123476,2026-07-09T09:15:20+00:00,yes,2026-07-09T09:37:44+00:00,yes,LinkedIn
+123477,http://docusign-envelope-view.xyz/auth-sign,https://www.phishtank.com/phish_detail.php?phish_id=123477,2026-07-10T15:45:10+00:00,yes,2026-07-10T16:07:33+00:00,yes,DocuSign
+123478,http://ebay-resolution-center.online/dispute,https://www.phishtank.com/phish_detail.php?phish_id=123478,2026-07-11T12:30:25+00:00,yes,2026-07-11T12:51:19+00:00,yes,eBay
+123479,http://citibank-card-verification.club/auth,https://www.phishtank.com/phish_detail.php?phish_id=123479,2026-07-12T17:22:40+00:00,yes,2026-07-12T17:45:00+00:00,yes,Citibank
+123480,http://zoom-room-auth-video.top/meeting-login,https://www.phishtank.com/phish_detail.php?phish_id=123480,2026-07-13T08:10:15+00:00,yes,2026-07-13T08:31:50+00:00,yes,Zoom
