@@ -98,6 +98,11 @@ def run_tests():
     assert r_sync.status_code == 200, f'Live Gmail sync failed: {r_sync.status_code}'
     print('[PASS] 11. /sync-gmail live inbound ingestion and screening works')
 
+    # 11b. Test Background Auto-Sync API Endpoint
+    r_autosync = client.get('/api/auto-sync')
+    assert r_autosync.status_code == 200, f'Auto-sync API failed: {r_autosync.status_code}'
+    print('[PASS] 11b. /api/auto-sync background polling endpoint works')
+
     # 12. Test API Messages Endpoint
     r11 = client.get('/api/messages')
     assert r11.status_code == 200, f'API messages failed: {r11.status_code}'

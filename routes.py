@@ -3,6 +3,7 @@ import io
 import re
 import imaplib
 import email
+import datetime
 from email.header import decode_header
 from flask import (
     Blueprint, render_template, request, redirect, url_for, 
@@ -100,7 +101,7 @@ def fetch_live_gmail(email_address, app_password, max_emails=5):
 # Before request guard: require verified Gmail session for all views
 @bp.before_request
 def require_login():
-    public_endpoints = ('main.login', 'static')
+    public_endpoints = ('main.login', 'static', 'main.api_auto_sync')
     if request.endpoint and not request.endpoint.startswith('static'):
         if request.endpoint not in public_endpoints and (not session.get('gmail') or not session.get('gmail_password')):
             return redirect(url_for('main.login'))
@@ -235,6 +236,59 @@ def sync_gmail():
     db.commit()
     flash(f"⚡ Live Gmail Sync Complete: Screened {count} live emails from {gmail_address}. {threats_found} threats quarantined.", "success")
     return redirect(url_for('main.quarantine_page'))
+
+@bp.route('/api/auto-sync', methods=['GET', 'POST'])
+def api_auto_sync():
+    gmail_address = session.get('gmail')
+    gmail_password = session.get('gmail_password')
+
+    if not gmail_address or not gmail_password:
+        return jsonify({"status": "idle", "message": "No Gmail account session"}), 200
+
+    try:
+        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=5)
+    except Exception as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 200
+
+    db = get_db()
+    new_count = 0
+    threats_count = 0
+
+    for item in live_messages:
+        # Deduplication check so background auto-sync doesn't re-insert identical emails
+        existing = db.execute(
+            'SELECT id FROM messages WHERE sender = ? AND subject = ? AND body = ?',
+            (item['sender'], item['subject'], item['body'])
+        ).fetchone()
+        if existing:
+            continue
+
+        a = analyze(item['sender'], item['subject'], item['body'])
+        status = 'quarantined' if a['verdict'] == 'phishing' else ('review' if a['score'] >= 0.35 else 'delivered')
+        if a['verdict'] == 'phishing':
+            threats_count += 1
+
+        db.execute(
+            'INSERT INTO messages (sender, subject, body, score, verdict, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (item['sender'], item['subject'], item['body'], a['score'], a['verdict'], a['reason'], status)
+        )
+        new_count += 1
+
+    if new_count > 0:
+        db.commit()
+
+    stats = db.execute("SELECT COUNT(*) as total, SUM(CASE WHEN status = 'quarantined' THEN 1 ELSE 0 END) as quarantined FROM messages").fetchone()
+
+    return jsonify({
+        "status": "success",
+        "synced": True,
+        "new_emails_count": new_count,
+        "threats_quarantined": threats_count,
+        "total_quarantined": (stats['quarantined'] if stats else 0) or 0,
+        "total_messages": (stats['total'] if stats else 0) or 0,
+        "gmail": gmail_address,
+        "timestamp": datetime.datetime.now().strftime("%I:%M:%S %p")
+    })
 
 def get_stats():
     db = get_db()

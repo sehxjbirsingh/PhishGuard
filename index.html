@@ -1205,13 +1205,10 @@
       </nav>
 
       <div class="nav-actions" id="portal-nav-actions">
-        <button type="button" id="nav-sync-btn" class="btn btn-outline btn-sm hidden" onclick="syncLiveGmailInbox()" title="Fetch and analyze latest live emails">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          Sync Live Inbox
-        </button>
-        <div id="nav-gmail-badge" class="status-indicator hidden" style="cursor: pointer;" onclick="openGmailModal()" title="Click to view connected Gmail account">
+        <div id="nav-gmail-badge" class="status-indicator hidden" style="background: rgba(0, 255, 157, 0.08); border: 1px solid rgba(0, 255, 157, 0.35); padding: 0.35rem 0.85rem; border-radius: var(--radius-md);" onclick="openGmailModal()" title="Gmail Auto-Sync active. Continuously screens incoming emails just like Gmail.">
           <span class="status-dot pulse"></span>
-          <span class="status-text font-mono" id="nav-gmail-text" style="font-size: 0.76rem;">user@gmail.com</span>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--cyber-green);">⚡ Auto-Sync Active</span>
+          <span class="status-text font-mono" id="nav-gmail-text" style="font-size: 0.74rem; margin-left: 0.25rem;">user@gmail.com</span>
         </div>
         <button type="button" id="nav-connect-btn" class="btn btn-outline btn-sm" onclick="openGmailModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
@@ -1271,13 +1268,12 @@
               </p>
             </div>
           </div>
-          <div style="display: flex; gap: 0.75rem;">
-            <button type="button" id="dash-sync-btn" class="btn btn-primary" onclick="syncLiveGmailInbox()" style="font-weight: 700;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-              </svg>
-              Sync Live Inbox Now
-            </button>
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div id="dash-autosync-status" class="status-indicator" style="background: rgba(0, 255, 157, 0.08); border: 1px solid rgba(0, 255, 157, 0.35); padding: 0.5rem 1rem; border-radius: var(--radius-md);">
+              <span class="status-dot pulse"></span>
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--cyber-green);">Auto-Syncing Live Inbox</span>
+              <span id="dash-autosync-time" style="font-size: 0.76rem; color: var(--text-dim); margin-left: 0.35rem;">(Active)</span>
+            </div>
             <button type="button" id="dash-connect-btn" class="btn btn-outline" onclick="openGmailModal()">
               Account Settings
             </button>

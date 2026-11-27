@@ -69,17 +69,10 @@
       <!-- User & Gmail Actions in Navbar -->
       <div class="nav-actions">
         {% if session.get('gmail') %}
-          <form action="{{ url_for('main.sync_gmail') }}" method="POST" class="inline-form">
-            <button type="submit" class="btn btn-outline btn-sm" title="Fetch and screen latest live emails from {{ session.get('gmail') }}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-              </svg>
-              Sync Live Inbox
-            </button>
-          </form>
-          <div class="status-indicator" style="cursor: pointer;" onclick="document.getElementById('gmail-modal').classList.remove('hidden')" title="Click to change Gmail account">
-            <span class="status-dot pulse"></span>
-            <span class="status-text font-mono" style="font-size: 0.76rem;">{{ session.get('gmail') }}</span>
+          <div class="status-indicator" style="background: rgba(0, 255, 157, 0.08); border: 1px solid rgba(0, 255, 157, 0.3); padding: 0.35rem 0.85rem; border-radius: var(--radius-md);" title="Gmail Auto-Sync active. Continuously screens incoming emails in the background.">
+            <span class="status-dot pulse" id="nav-auto-sync-dot"></span>
+            <span style="font-size: 0.78rem; font-weight: 700; color: var(--cyber-green);">⚡ Auto-Sync Active</span>
+            <span class="status-text font-mono" style="font-size: 0.74rem; margin-left: 0.25rem;">({{ session.get('gmail') }})</span>
           </div>
         {% else %}
           <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('gmail-modal').classList.remove('hidden')">

@@ -379,4 +379,55 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => alert.remove(), 400);
     });
   }, 7000);
+
+  // Background Auto-Sync Engine (Gmail Live Stream)
+  initAutoSync();
 });
+
+/**
+ * Periodically polls /api/auto-sync in the background just like Gmail
+ */
+function initAutoSync() {
+  const syncStatusEl = document.getElementById('auto-sync-status-time');
+  const navIndicator = document.getElementById('nav-auto-sync-dot');
+
+  setInterval(async () => {
+    try {
+      if (navIndicator) navIndicator.classList.add('pulse');
+      const res = await fetch('/api/auto-sync');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.status === 'success') {
+        const timeStr = data.timestamp || new Date().toLocaleTimeString();
+        if (syncStatusEl) {
+          syncStatusEl.textContent = `(Synced at ${timeStr})`;
+        }
+
+        // If new incoming emails were intercepted by auto-sync, show notification & refresh
+        if (data.new_emails_count > 0) {
+          const banner = document.createElement('div');
+          banner.className = 'alert alert-success animate-fade-in';
+          banner.style.position = 'fixed';
+          banner.style.bottom = '24px';
+          banner.style.right = '24px';
+          banner.style.zIndex = '99999';
+          banner.style.maxWidth = '420px';
+          banner.style.boxShadow = '0 10px 30px rgba(0, 255, 157, 0.35)';
+          banner.innerHTML = `
+            <div class="alert-content">
+              <span>⚡ <strong>Auto-Sync Active:</strong> Screened ${data.new_emails_count} new email(s) from Gmail (${data.threats_quarantined} quarantined).</span>
+            </div>
+          `;
+          document.body.appendChild(banner);
+          setTimeout(() => {
+            banner.remove();
+            window.location.reload();
+          }, 1600);
+        }
+      }
+    } catch (e) {
+      // background silent retry
+    }
+  }, 15000);
+}
