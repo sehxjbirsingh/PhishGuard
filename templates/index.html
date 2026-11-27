@@ -104,9 +104,9 @@
     }
 
     .nav-container {
-      max-width: 1400px;
+      max-width: 100%;
       margin: 0 auto;
-      padding: 0.85rem 1.5rem;
+      padding: 0.85rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -229,10 +229,10 @@
     /* Main Container */
     .main-content {
       flex: 1;
-      max-width: 1400px;
+      max-width: 100%;
       width: 100%;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 1.5rem 2rem;
     }
 
     .view-section {
@@ -447,7 +447,7 @@
 
     /* Scanner Form */
     .scanner-center-layout {
-      max-width: 880px;
+      max-width: 100%;
       margin: 0 auto;
       width: 100%;
     }
@@ -1116,8 +1116,9 @@
     }
 
     .footer-container {
-      max-width: 1400px;
+      max-width: 100%;
       margin: 0 auto;
+      padding: 0 0.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1225,7 +1226,7 @@
   </header>
 
   <!-- Notification Banner -->
-  <div id="toast-banner" class="hidden" style="max-width: 1400px; margin: 1rem auto 0; padding: 0 1.5rem; width: 100%;">
+  <div id="toast-banner" class="hidden" style="max-width: 100%; margin: 1rem auto 0; padding: 0 2rem; width: 100%;">
     <div id="toast-box" class="card" style="padding: 0.85rem 1.25rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; border-color: var(--cyber-green);">
       <span id="toast-text"></span>
       <button type="button" onclick="document.getElementById('toast-banner').classList.add('hidden')" style="background: none; border: none; color: inherit; font-size: 1.3rem; cursor: pointer;">&times;</button>
@@ -2198,52 +2199,43 @@
     });
   </script>
 
-  <!-- LOGIN PORTAL OVERLAY -->
-  <div id="login-portal-modal" class="hidden" style="position: fixed; inset: 0; z-index: 9999; background: rgba(5, 11, 8, 0.96); backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
-    <div class="card" style="max-width: 520px; width: 100%; border-color: var(--cyber-green); box-shadow: 0 0 40px rgba(0, 255, 157, 0.25);">
+  <!-- LOGIN PORTAL OVERLAY: MANDATORY GMAIL -->
+  <div id="login-portal-modal" class="hidden" style="position: fixed; inset: 0; z-index: 9999; background: rgba(5, 11, 8, 0.97); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 540px; width: 100%; border-color: var(--cyber-green); box-shadow: 0 0 45px rgba(0, 255, 157, 0.22);">
       <div style="text-align: center; margin-bottom: 1.5rem;">
-        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #059669, #00ff9d); color: #03140a; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.75rem; box-shadow: 0 0 24px var(--cyber-glow);">
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #059669, #00ff9d); color: #03140a; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 0.85rem; box-shadow: 0 0 28px var(--cyber-glow);">
           🛡️
         </div>
-        <h2 style="color: #fff; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.35rem;">PhishGuard Security Gateway</h2>
-        <p style="color: var(--text-muted); font-size: 0.88rem;">Sign in to initialize live threat detection telemetry</p>
+        <span class="badge badge-success" style="font-size: 0.72rem; padding: 3px 10px; margin-bottom: 0.5rem; display: inline-block;">MANDATORY LIVE GMAIL INBOX AUTHENTICATION</span>
+        <h2 style="color: #fff; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.35rem;">PhishGuard Defense Gateway</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.45;">Enter your Gmail address and Google App Password to initialize real-time heuristic email threat screening.</p>
       </div>
 
       <form id="portal-login-form" onsubmit="handlePortalLogin(event)">
-        <div class="form-group">
-          <label class="form-label">Operator Username</label>
-          <input type="text" id="portal-user-input" class="form-input" value="admin" required placeholder="e.g. admin or sec-ops">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Gmail Address <span style="color: var(--color-danger);">*</span></label>
+          <input type="email" id="portal-gmail-input" class="form-input" placeholder="e.g. yourname@gmail.com" required autofocus>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Master Password</label>
-          <input type="password" id="portal-pass-input" class="form-input" value="cyberpassword123" required placeholder="••••••••••••">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label">Google 16-Character App Password <span style="color: var(--color-danger);">*</span></label>
+          <input type="password" id="portal-gmail-pwd" class="form-input font-mono" placeholder="•••• •••• •••• ••••" required>
         </div>
 
-        <div style="margin: 1.25rem 0; padding: 1rem; border-radius: var(--radius-md); background: rgba(0, 255, 157, 0.05); border: 1px dashed rgba(0, 255, 157, 0.3);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.85rem; font-weight: 700; color: var(--cyber-green);">✉️ Connect Gmail (For Live Data)</span>
-            <span style="font-size: 0.72rem; color: var(--text-dim);">Optional</span>
-          </div>
-          <div class="form-group" style="margin-bottom: 0.65rem;">
-            <input type="email" id="portal-gmail-input" class="form-input" placeholder="your-name@gmail.com">
-          </div>
-          <div class="form-group" style="margin-bottom: 0.35rem;">
-            <input type="password" id="portal-gmail-pwd" class="form-input" placeholder="Google 16-character App Password (optional)">
-          </div>
-          <p style="font-size: 0.74rem; color: var(--text-muted); margin: 0;">
-            Tip: Generate a 16-character Google App Password in your Google Account &gt; Security &gt; 2-Step Verification &gt; App Passwords.
-          </p>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.85rem;">
-          Sign In &amp; Initialize Gateway &rarr;
-        </button>
-
-        <button type="button" onclick="handlePortalDemoLogin()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 0.65rem;">
-          ⚡ 1-Click Instant Demo Access
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.9rem; font-weight: 700;">
+          Connect Live Gmail &amp; Enter Gateway &rarr;
         </button>
       </form>
+
+      <div style="margin-top: 1.25rem; padding: 1rem; border-radius: var(--radius-md); background: rgba(0, 255, 157, 0.05); border: 1px dashed rgba(0, 255, 157, 0.25); font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+        <strong style="color: var(--cyber-green);">⚡ Need a Google App Password?</strong><br>
+        1. Open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color: var(--cyber-green); text-decoration: underline;">myaccount.google.com/apppasswords</a>.<br>
+        2. In App Name, type <strong>PhishGuard</strong> &amp; click <strong>Create</strong>.<br>
+        3. Copy the 16-character code and paste it above.<br>
+        <span style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 0.4rem;">
+          * Requires 2-Step Verification active on your Google account. Ensure IMAP is enabled in Gmail settings.
+        </span>
+      </div>
     </div>
   </div>
 
@@ -2353,20 +2345,24 @@
 
     function handlePortalLogin(e) {
       if (e) e.preventDefault();
-      const user = document.getElementById('portal-user-input').value.trim() || 'admin';
       const gmail = document.getElementById('portal-gmail-input').value.trim();
+      const pwd = document.getElementById('portal-gmail-pwd').value.trim();
       
-      localStorage.setItem('phishguard_user', user);
-      if (gmail) {
-        localStorage.setItem('phishguard_gmail', gmail);
+      if (!gmail || !pwd) {
+        alert('Both Gmail address and 16-character Google App Password are required.');
+        return;
       }
+      
+      const user = gmail.split('@')[0];
+      localStorage.setItem('phishguard_user', user);
+      localStorage.setItem('phishguard_gmail', gmail);
       
       const modal = document.getElementById('login-portal-modal');
       modal.classList.add('hidden');
       modal.style.display = 'none';
 
       updateNavbarAndDashboardUser(user, gmail);
-      showToast('Welcome ' + user + '! Gateway initialized successfully.');
+      syncLiveGmailInbox();
     }
 
     function handlePortalDemoLogin() {

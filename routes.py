@@ -97,39 +97,80 @@ def fetch_live_gmail(email_address, app_password, max_emails=5):
     mail.logout()
     return results
 
-# Before request guard: require login for application views
+# Before request guard: require verified Gmail session for all views
 @bp.before_request
 def require_login():
-    public_endpoints = ('main.login', 'static', 'main.api_analyze', 'main.api_messages')
+    public_endpoints = ('main.login', 'static')
     if request.endpoint and not request.endpoint.startswith('static'):
-        if request.endpoint not in public_endpoints and not session.get('user'):
+        if request.endpoint not in public_endpoints and (not session.get('gmail') or not session.get('gmail_password')):
             return redirect(url_for('main.login'))
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip() or 'Security_Analyst'
-        password = request.form.get('password', '').strip()
         gmail_address = request.form.get('gmail_address', '').strip()
         gmail_app_password = request.form.get('gmail_app_password', '').strip()
 
-        session['user'] = username
-        if gmail_address:
-            session['gmail'] = gmail_address
-            session['gmail_password'] = gmail_app_password
-            flash(f'Signed in as {username}. Gmail connected: {gmail_address}', 'success')
-        else:
-            flash(f'Signed in successfully as {username}.', 'success')
-        return redirect(url_for('main.dashboard'))
+        if not gmail_address or not gmail_app_password:
+            flash('Both Gmail address and 16-character Google App Password are mandatory.', 'error')
+            return render_template('login.html', gmail_address=gmail_address)
 
-    if session.get('user'):
+        clean_password = gmail_app_password.replace(' ', '')
+
+        # Test direct connection to Google IMAP server
+        try:
+            mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=12)
+            mail.login(gmail_address, clean_password)
+            mail.logout()
+        except Exception as exc:
+            err_msg = str(exc)
+            if "AUTHENTICATIONFAILED" in err_msg or "Invalid credentials" in err_msg:
+                flash("❌ Gmail authentication failed: Invalid credentials. Please verify you are using your 16-character Google App Password from myaccount.google.com/apppasswords (not your normal Google password).", "error")
+            else:
+                flash(f"❌ Connection to imap.gmail.com failed: {err_msg}. Please ensure IMAP is enabled in your Gmail settings.", "error")
+            return render_template('login.html', gmail_address=gmail_address)
+
+        session['gmail'] = gmail_address
+        session['gmail_password'] = clean_password
+        session['user'] = gmail_address.split('@')[0]
+
+        # Automatically fetch and screen live incoming emails from user inbox
+        try:
+            live_messages = fetch_live_gmail(gmail_address, clean_password, max_emails=10)
+            if live_messages:
+                db = get_db()
+                count = 0
+                threats_found = 0
+                for item in live_messages:
+                    s_sender = item['sender']
+                    s_subject = item['subject']
+                    s_body = item['body']
+                    a = analyze(s_sender, s_subject, s_body)
+                    status = 'quarantined' if a['verdict'] == 'phishing' else ('review' if a['score'] >= 0.35 else 'delivered')
+                    if a['verdict'] == 'phishing':
+                        threats_found += 1
+                    db.execute(
+                        'INSERT INTO messages (sender, subject, body, score, verdict, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (s_sender, s_subject, s_body, a['score'], a['verdict'], a['reason'], status)
+                    )
+                    count += 1
+                db.commit()
+                flash(f"✅ Connected to {gmail_address}! Ingested and screened {count} live incoming emails ({threats_found} quarantined).", "success")
+            else:
+                flash(f"✅ Connected to {gmail_address}! Live monitoring online. Inbox has 0 unread messages.", "success")
+        except Exception:
+            flash(f"✅ Connected to {gmail_address}! Live monitoring online.", "success")
+
+        return redirect(url_for('main.quarantine_page'))
+
+    if session.get('gmail') and session.get('gmail_password'):
         return redirect(url_for('main.dashboard'))
     return render_template('login.html')
 
 @bp.get('/logout')
 def logout():
     session.clear()
-    flash('Signed out successfully.', 'info')
+    flash('Signed out of Gmail gateway.', 'info')
     return redirect(url_for('main.login'))
 
 @bp.post('/connect-gmail')
@@ -137,59 +178,39 @@ def connect_gmail():
     gmail_address = request.form.get('gmail_address', '').strip()
     gmail_app_password = request.form.get('gmail_app_password', '').strip()
 
-    if not gmail_address:
-        flash('Please provide a valid Gmail address.', 'error')
+    if not gmail_address or not gmail_app_password:
+        flash('Both Gmail address and Google App Password are required.', 'error')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+    clean_password = gmail_app_password.replace(' ', '')
+    try:
+        mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=12)
+        mail.login(gmail_address, clean_password)
+        mail.logout()
+    except Exception as exc:
+        flash(f"Authentication with imap.gmail.com failed: {exc}", "error")
         return redirect(request.referrer or url_for('main.dashboard'))
 
     session['gmail'] = gmail_address
-    session['gmail_password'] = gmail_app_password
-    flash(f'Gmail inbox connected: {gmail_address}. Ready to sync live messages.', 'success')
+    session['gmail_password'] = clean_password
+    session['user'] = gmail_address.split('@')[0]
+    flash(f'Gmail account linked: {gmail_address}. Live sync active.', 'success')
     return redirect(request.referrer or url_for('main.dashboard'))
 
 @bp.post('/sync-gmail')
 def sync_gmail():
     gmail_address = session.get('gmail')
     gmail_password = session.get('gmail_password')
-    force_demo = request.form.get('demo') == '1'
 
-    live_messages = []
-    sync_mode = "Live IMAP"
+    if not gmail_address or not gmail_password:
+        flash('Please authenticate with your Gmail account to sync live data.', 'error')
+        return redirect(url_for('main.login'))
 
-    # Try connecting to live Gmail via IMAP if credentials provided
-    if gmail_address and gmail_password and not force_demo:
-        try:
-            live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=5)
-        except Exception as exc:
-            err_msg = str(exc)
-            if "AUTHENTICATIONFAILED" in err_msg or "Invalid credentials" in err_msg:
-                flash("Gmail authentication failed: Please use a 16-character Google App Password (myaccount.google.com/apppasswords). Falling back to simulated live incoming stream.", "warning")
-            else:
-                flash(f"Live Gmail connection issue ({err_msg}). Falling back to simulated live incoming feed.", "warning")
-            live_messages = []
-
-    # If no IMAP credentials or connection failed, provide realistic live stream simulation
-    if not live_messages:
-        sync_mode = "Live Feed Simulator"
-        live_messages = [
-            {
-                "sender": f"security-alert@{session.get('gmail', 'gmail.com').split('@')[0]}-auth.xyz",
-                "subject": "Action required: Suspicious sign-in detected on your Gmail account",
-                "body": "We detected an unauthorized sign-in from an unknown device. Verify your credentials immediately at http://gmail-auth-verify.top/login to avoid suspension. Enter your password.",
-                "date": "Just now"
-            },
-            {
-                "sender": "no-reply@accounts.google.example",
-                "subject": "Security notice: 2-Step Verification turned on",
-                "body": "2-Step Verification is active for your Google Account. If you made this change, no action is needed. Review activity at https://myaccount.google.example/security.",
-                "date": "Just now"
-            },
-            {
-                "sender": "it-support@internal-team.example",
-                "subject": "Urgent: Direct deposit payroll mismatch notification",
-                "body": "Your bank details require verification before salary release today. Please submit your account details and password at http://bit.ly/pay-verify.",
-                "date": "Just now"
-            }
-        ]
+    try:
+        live_messages = fetch_live_gmail(gmail_address, gmail_password, max_emails=10)
+    except Exception as exc:
+        flash(f"Failed to fetch live emails from Gmail: {exc}", "error")
+        return redirect(url_for('main.quarantine_page'))
 
     db = get_db()
     count = 0
@@ -212,7 +233,7 @@ def sync_gmail():
         count += 1
 
     db.commit()
-    flash(f"Live Sync Complete ({sync_mode}): Screened {count} incoming emails. Intercepted {threats_found} threats into quarantine.", "success")
+    flash(f"⚡ Live Gmail Sync Complete: Screened {count} live emails from {gmail_address}. {threats_found} threats quarantined.", "success")
     return redirect(url_for('main.quarantine_page'))
 
 def get_stats():

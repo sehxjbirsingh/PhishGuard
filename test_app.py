@@ -8,19 +8,20 @@ def run_tests():
     r0 = client.get('/login')
     assert r0.status_code == 200, f'Login page failed: {r0.status_code}'
     assert b'PhishGuard' in r0.data, 'Brand not in login page'
-    assert b'PhishGuard Gateway' in r0.data, 'Login title not found'
-    print('[PASS] 0. Login page (/login) loads successfully')
+    assert b'Mandatory Live Gmail Gateway' in r0.data, 'Mandatory login badge not found'
+    print('[PASS] 0. Login page (/login) loads successfully with mandatory Gmail gateway')
 
     # Unauthenticated access to / redirects to /login
     r_unauth = client.get('/', follow_redirects=False)
     assert r_unauth.status_code == 302 and '/login' in r_unauth.headers.get('Location', ''), 'Unauthenticated request was not redirected to /login'
     print('[PASS] 0b. Unauthenticated access correctly redirects to /login')
 
-    # Authenticate via /login with default credentials
-    login_res = client.post('/login', data={'username': 'admin', 'password': 'cyberpassword123'}, follow_redirects=True)
-    assert login_res.status_code == 200, f'Login submission failed: {login_res.status_code}'
-    assert b'Executive Security Dashboard' in login_res.data, 'Login failed to reach dashboard'
-    print('[PASS] 0c. Operator authentication successful')
+    # Authenticate session with verified Gmail credentials
+    with client.session_transaction() as sess:
+        sess['gmail'] = 'analyst.live@gmail.com'
+        sess['gmail_password'] = 'mockapppassword16'
+        sess['user'] = 'analyst.live'
+    print('[PASS] 0c. Live Gmail operator session initialized')
 
     # 1. Test Dashboard
     r1 = client.get('/')
