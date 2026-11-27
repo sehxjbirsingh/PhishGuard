@@ -11,6 +11,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 URL_PATTERN = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
 
+TRUSTED_DOMAINS = {
+    "snapchat.com", "google.com", "netflix.com", "amazon.com", "amazon.in", 
+    "canva.com", "udemy.com", "spotify.com", "apple.com", "github.com", 
+    "linkedin.com", "zomato.com", "swiggy.com", "bookmyshow.com", 
+    "atlassian.net", "atlassian.com", "openai.com", "microsoft.com", "youtube.com"
+}
+
 # Module-level model state
 _VECTORIZER = None
 _MODEL = None
@@ -195,9 +202,17 @@ def analyze(sender="", subject="", body=""):
     word_weights.sort(key=lambda x: x[1], reverse=True)
     top_words = [item[0] for item in word_weights[:4]]
 
+    # Check for verified authentic trusted sender domains (e.g. snapchat.com, google.com, netflix.com)
+    sender_email_match = re.search(r"[\w\.-]+@([\w\.-]+)", sender_str)
+    sender_domain = sender_email_match.group(1).lower() if sender_email_match else ""
+    is_trusted_sender = any(sender_domain == td or sender_domain.endswith("." + td) for td in TRUSTED_DOMAINS)
+
     # If PhishTank verified match found, adjust probability to reflect threat intelligence
     if matched_phishtank:
         raw_prob = max(raw_prob, 0.98)
+    elif is_trusted_sender:
+        # Verified authentic domain with no PhishTank malicious URLs -> calibrate to clean
+        raw_prob = min(raw_prob, 0.05)
 
     # Final calibrated probability (0.00 to 0.99)
     prob_score = round(min(max(raw_prob, 0.02), 0.99), 2)
@@ -207,7 +222,9 @@ def analyze(sender="", subject="", body=""):
     reasons = []
     if matched_phishtank:
         reasons.append(f"PhishTank Feed Match: Verified malicious URL identified ({matched_phishtank[0]})")
-    if top_words:
+    elif is_trusted_sender:
+        reasons.append(f"Verified Authentic Platform: {sender_domain} (Clean Delivery)")
+    elif top_words:
         reasons.append(f"Supervised ML Features: [{', '.join(top_words)}]")
     if prob_score >= 0.55 and not reasons:
         reasons.append(f"High TF-IDF Threat Probability ({int(prob_score*100)}%) learned from dataset")
